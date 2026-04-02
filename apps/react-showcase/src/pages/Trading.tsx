@@ -897,6 +897,7 @@ function PriceLadder({
 // Dock Manager: Custom dark theme
 // ---------------------------------------------------------------------------
 
+/** Dark dock theme — matches --mdl-* dark tokens (thinkorswim-inspired) */
 const marketsDarkTheme = createTheme(
   "Markets Dark",
   "dark",
@@ -917,6 +918,30 @@ const marketsDarkTheme = createTheme(
     hover: "0 0% 15%",
     primary: "171 77% 55%",
     floatShadow: "0 0% 0%",
+  }
+);
+
+/** Light dock theme — matches --mdl-* light tokens */
+const marketsLightTheme = createTheme(
+  "Markets Light",
+  "light",
+  { hue: 220, sat: 9, light: 96 },
+  { hue: 174, sat: 72, light: 40 },
+  {
+    bg: "0 0% 100%",
+    surface: "0 0% 100%",
+    surfaceAlt: "220 9% 96%",
+    panelHeader: "0 0% 100%",
+    tabBar: "220 9% 96%",
+    tabActive: "0 0% 100%",
+    border: "220 9% 90%",
+    splitter: "220 9% 90%",
+    text: "225 18% 10%",
+    textSecondary: "218 11% 52%",
+    textMuted: "218 11% 72%",
+    hover: "220 9% 96%",
+    primary: "174 72% 40%",
+    floatShadow: "0 0% 70%",
   }
 );
 
@@ -1497,6 +1522,17 @@ export default function Trading() {
   const [livePositions, setLivePositions] = useState<LivePosition[]>(initLivePositions);
   const [selectedPosition, setSelectedPosition] = useState<LivePosition | null>(null);
   const [orders, setOrders] = useState<Order[]>(ORDERS);
+
+  // Track dark/light mode from the <html> class (toggled by App.tsx header)
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
   const [positionFilter, setPositionFilter] = useState<"All" | "IG" | "HY" | "GOVT">("All");
   const [detailTab, setDetailTab] = useState<"details" | "ladder">("details");
   const [_benchmarks, setBenchmarks] = useState<BenchmarkYield[]>(
@@ -1879,7 +1915,7 @@ export default function Trading() {
             initialState={defaultState}
             widgets={WIDGETS}
             onReady={setApi}
-            theme={marketsDarkTheme}
+            theme={isDark ? marketsDarkTheme : marketsLightTheme}
           />
         </div>
       </div>
