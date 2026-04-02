@@ -930,38 +930,58 @@ const defaultState: DockManagerState = {
   },
   layout: {
     type: "split",
+    id: "root",
     direction: "vertical",
+    sizes: [12, 88],
     children: [
-      { type: "panel", panelId: "summary", size: 15 },
+      {
+        type: "tabgroup",
+        id: "tg_summary",
+        panels: ["summary"],
+        activePanel: "summary",
+      },
       {
         type: "split",
+        id: "main_split",
         direction: "horizontal",
-        size: 85,
+        sizes: [65, 35],
         children: [
           {
             type: "split",
+            id: "left_split",
             direction: "vertical",
-            size: 65,
+            sizes: [60, 40],
             children: [
-              { type: "panel", panelId: "positions", size: 60 },
-              { type: "panel", panelId: "activity", size: 40 },
+              {
+                type: "tabgroup",
+                id: "tg_positions",
+                panels: ["positions"],
+                activePanel: "positions",
+              },
+              {
+                type: "tabgroup",
+                id: "tg_activity",
+                panels: ["activity"],
+                activePanel: "activity",
+              },
             ],
           },
           {
             type: "tabgroup",
-            size: 35,
-            children: [
-              { type: "panel", panelId: "detail" },
-              { type: "panel", panelId: "ladder" },
-            ],
+            id: "tg_right",
+            panels: ["detail", "ladder"],
+            activePanel: "detail",
           },
         ],
       },
     ],
   },
   floatingPanels: [],
-  activePanel: "positions",
-} as unknown as DockManagerState;
+  popoutPanels: [],
+  unpinnedPanels: [],
+  nextZIndex: 1,
+  activePaneId: "positions",
+};
 
 // ---------------------------------------------------------------------------
 // Dock Widget: Portfolio Summary
