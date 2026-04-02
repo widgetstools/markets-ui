@@ -1,5 +1,4 @@
 import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { ButtonModule } from 'primeng/button';
@@ -15,13 +14,18 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { SliderModule } from 'primeng/slider';
-import { TableModule } from 'primeng/table';
 import { TextareaModule } from 'primeng/textarea';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
 import { DatePickerModule } from 'primeng/datepicker';
+
+import { AgGridAngular } from 'ag-grid-angular';
+import { AllCommunityModule, ModuleRegistry, type ColDef } from 'ag-grid-community';
+import { marketsGridTheme } from '@marketsui/tokens/ag-grid-theme';
+
+ModuleRegistry.registerModules([AllCommunityModule]);
 
 /* ── Token data ── */
 interface ColorSwatch { name: string; cssVar: string; }
@@ -31,7 +35,7 @@ interface HeightToken { label: string; value: string; }
 interface PaddingToken { label: string; value: string; }
 interface RadiusToken { label: string; value: string; }
 interface OrderLevel { price: string; size: string; total: string; depth: number; gradient?: string; }
-interface Position { symbol: string; qty: number; price: number; pnl: number; }
+interface Position { symbol: string; side: 'Buy' | 'Sell'; qty: number; avgPrice: number; lastPrice: number; pnl: number; status: 'Filled' | 'Partial' | 'Working'; exchange: string; }
 
 const SEMANTIC_COLORS: ColorSwatch[] = [
   { name: 'Background', cssVar: '--background' },
@@ -114,11 +118,24 @@ const TIME_FRAME_OPTIONS = [
   { label: '1 Week', value: '1w' },
 ];
 const POSITIONS: Position[] = [
-  { symbol: 'AAPL', qty: 500, price: 182.45, pnl: 1234.56 },
-  { symbol: 'GOOGL', qty: 200, price: 141.82, pnl: -567.89 },
-  { symbol: 'MSFT', qty: 350, price: 378.91, pnl: 891.23 },
-  { symbol: 'TSLA', qty: 100, price: 248.12, pnl: -234.56 },
-  { symbol: 'AMZN', qty: 150, price: 178.65, pnl: 456.78 },
+  { symbol: 'AAPL',  side: 'Buy',  qty: 500,  avgPrice: 182.45, lastPrice: 184.92, pnl: 1234.56,  status: 'Filled',  exchange: 'NASDAQ' },
+  { symbol: 'GOOGL', side: 'Buy',  qty: 200,  avgPrice: 141.82, lastPrice: 138.98, pnl: -567.89,  status: 'Filled',  exchange: 'NASDAQ' },
+  { symbol: 'MSFT',  side: 'Buy',  qty: 350,  avgPrice: 378.91, lastPrice: 381.46, pnl: 891.23,   status: 'Filled',  exchange: 'NASDAQ' },
+  { symbol: 'TSLA',  side: 'Sell', qty: 100,  avgPrice: 248.12, lastPrice: 250.47, pnl: -234.56,  status: 'Partial', exchange: 'NASDAQ' },
+  { symbol: 'AMZN',  side: 'Buy',  qty: 150,  avgPrice: 178.65, lastPrice: 181.70, pnl: 456.78,   status: 'Filled',  exchange: 'NASDAQ' },
+  { symbol: 'META',  side: 'Buy',  qty: 300,  avgPrice: 485.20, lastPrice: 491.35, pnl: 1845.00,  status: 'Filled',  exchange: 'NASDAQ' },
+  { symbol: 'NVDA',  side: 'Buy',  qty: 250,  avgPrice: 721.33, lastPrice: 735.10, pnl: 3442.50,  status: 'Filled',  exchange: 'NASDAQ' },
+  { symbol: 'JPM',   side: 'Buy',  qty: 400,  avgPrice: 198.40, lastPrice: 201.15, pnl: 1100.00,  status: 'Filled',  exchange: 'NYSE' },
+  { symbol: 'V',     side: 'Sell', qty: 175,  avgPrice: 278.50, lastPrice: 275.82, pnl: 469.00,   status: 'Filled',  exchange: 'NYSE' },
+  { symbol: 'WMT',   side: 'Buy',  qty: 600,  avgPrice: 165.30, lastPrice: 163.88, pnl: -852.00,  status: 'Partial', exchange: 'NYSE' },
+  { symbol: 'DIS',   side: 'Sell', qty: 225,  avgPrice: 112.45, lastPrice: 114.20, pnl: -393.75,  status: 'Working', exchange: 'NYSE' },
+  { symbol: 'NFLX',  side: 'Buy',  qty: 80,   avgPrice: 605.12, lastPrice: 612.40, pnl: 582.40,   status: 'Filled',  exchange: 'NASDAQ' },
+  { symbol: 'AMD',   side: 'Buy',  qty: 450,  avgPrice: 162.78, lastPrice: 159.33, pnl: -1552.50, status: 'Filled',  exchange: 'NASDAQ' },
+  { symbol: 'INTC',  side: 'Sell', qty: 800,  avgPrice: 43.55,  lastPrice: 42.10,  pnl: 1160.00,  status: 'Partial', exchange: 'NASDAQ' },
+  { symbol: 'BA',    side: 'Buy',  qty: 120,  avgPrice: 215.60, lastPrice: 218.35, pnl: 330.00,   status: 'Filled',  exchange: 'NYSE' },
+  { symbol: 'CRM',   side: 'Buy',  qty: 190,  avgPrice: 298.44, lastPrice: 302.10, pnl: 695.40,   status: 'Filled',  exchange: 'NYSE' },
+  { symbol: 'UBER',  side: 'Sell', qty: 350,  avgPrice: 72.30,  lastPrice: 74.15,  pnl: -647.50,  status: 'Working', exchange: 'NYSE' },
+  { symbol: 'SPOT',  side: 'Buy',  qty: 95,   avgPrice: 310.25, lastPrice: 315.80, pnl: 527.25,   status: 'Filled',  exchange: 'NYSE' },
 ];
 
 @Component({
@@ -126,10 +143,10 @@ const POSITIONS: Position[] = [
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DecimalPipe, FormsModule, ButtonModule, InputTextModule, SelectModule, ToggleSwitchModule,
+    FormsModule, ButtonModule, InputTextModule, SelectModule, ToggleSwitchModule,
     TagModule, DividerModule, AccordionModule, MessageModule, AvatarModule,
     CheckboxModule, RadioButtonModule, ProgressBarModule, SliderModule,
-    TableModule, TextareaModule, SelectButtonModule, ToggleButtonModule, MenuModule,
+    AgGridAngular, TextareaModule, SelectButtonModule, ToggleButtonModule, MenuModule,
     SkeletonModule, DatePickerModule,
   ],
   template: `
@@ -705,38 +722,26 @@ const POSITIONS: Position[] = [
         </div>
       </div>
 
-      <!-- K. Table -->
+      <!-- K. Trading Blotter (AG Grid) -->
       <div class="card">
         <div class="card-header">
           <div class="flex items-center gap-2">
             <svg class="h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></svg>
-            <h3 class="card-title">Table</h3>
+            <h3 class="card-title">Trading Blotter</h3>
           </div>
-          <p class="card-desc">Data tables for displaying positions and trading data.</p>
+          <p class="card-desc">AG Grid trading positions blotter with sorting, filtering, and pinned columns.</p>
         </div>
         <div class="card-content">
-          <p-table [value]="positions" [tableStyle]="{ 'min-width': '100%' }">
-            <ng-template #header>
-              <tr>
-                <th>Symbol</th>
-                <th class="text-right">Qty</th>
-                <th class="text-right">Price</th>
-                <th class="text-right">P&amp;L</th>
-              </tr>
-            </ng-template>
-            <ng-template #body let-pos>
-              <tr>
-                <td class="font-medium font-mono">{{ pos.symbol }}</td>
-                <td class="text-right font-mono">{{ pos.qty | number }}</td>
-                <td class="text-right font-mono">{{ pos.price | number:'1.2-2' }}</td>
-                <td class="text-right font-mono font-medium"
-                    [class.text-pnl-positive]="pos.pnl >= 0"
-                    [class.text-pnl-negative]="pos.pnl < 0">
-                  {{ pos.pnl >= 0 ? '+' : '' }}{{ pos.pnl | number:'1.2-2' }}
-                </td>
-              </tr>
-            </ng-template>
-          </p-table>
+          <ag-grid-angular
+            [theme]="gridTheme"
+            [rowData]="positions"
+            [columnDefs]="positionColDefs"
+            [defaultColDef]="defaultColDef"
+            [rowHeight]="32"
+            [headerHeight]="36"
+            [animateRows]="true"
+            style="height: 500px; width: 100%;"
+          ></ag-grid-angular>
         </div>
       </div>
 
@@ -906,6 +911,50 @@ export class DesignSystemComponent {
   instrumentOptions = INSTRUMENT_OPTIONS;
   timeFrameOptions = TIME_FRAME_OPTIONS;
   positions = POSITIONS;
+
+  /* AG Grid config */
+  readonly gridTheme = marketsGridTheme;
+  readonly defaultColDef: ColDef = { flex: 1, sortable: true, filter: true, resizable: true };
+  readonly positionColDefs: ColDef[] = [
+    { field: 'symbol', headerName: 'Symbol', pinned: 'left', flex: 1 },
+    {
+      field: 'side', headerName: 'Side', flex: 0.7,
+      cellStyle: (params: { value: string }) =>
+        params.value === 'Buy'
+          ? { color: 'hsl(var(--mdl-pnl-positive))' }
+          : { color: 'hsl(var(--mdl-pnl-negative))' },
+    },
+    {
+      field: 'qty', headerName: 'Qty', flex: 0.8,
+      type: 'rightAligned',
+      valueFormatter: (params: { value: number }) => params.value?.toLocaleString() ?? '',
+    },
+    {
+      field: 'avgPrice', headerName: 'Avg Price', flex: 1,
+      type: 'rightAligned',
+      valueFormatter: (params: { value: number }) => params.value?.toFixed(2) ?? '',
+    },
+    {
+      field: 'lastPrice', headerName: 'Last Price', flex: 1,
+      type: 'rightAligned',
+      valueFormatter: (params: { value: number }) => params.value?.toFixed(2) ?? '',
+    },
+    {
+      field: 'pnl', headerName: 'P&L', flex: 1,
+      type: 'rightAligned',
+      valueFormatter: (params: { value: number }) => {
+        if (params.value == null) return '';
+        const sign = params.value >= 0 ? '+' : '';
+        return `${sign}${params.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      },
+      cellStyle: (params: { value: number }) =>
+        params.value >= 0
+          ? { color: 'hsl(var(--mdl-pnl-positive))' }
+          : { color: 'hsl(var(--mdl-pnl-negative))' },
+    },
+    { field: 'status', headerName: 'Status', flex: 0.8 },
+    { field: 'exchange', headerName: 'Exchange', flex: 0.8 },
+  ];
 
   /* Switch states */
   switchEnabled = true;

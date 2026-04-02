@@ -54,7 +54,10 @@ export class AppComponent {
   isDark = signal(true);
 
   toggleTheme(): void {
-    const dark = this.document.documentElement.classList.toggle('dark');
+    const html = this.document.documentElement;
+    const dark = html.classList.toggle('dark');
+    // Sync AG Grid theme mode — it reads data-ag-theme-mode, not .dark class
+    html.dataset['agThemeMode'] = dark ? 'dark' : 'light';
     this.isDark.set(dark);
   }
 }

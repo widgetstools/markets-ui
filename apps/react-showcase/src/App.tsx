@@ -13,13 +13,12 @@ function Header() {
   const [dark, setDark] = useState(true);
 
   const toggleTheme = () => {
+    const next = !dark;
     const html = document.documentElement;
-    if (dark) {
-      html.classList.remove("dark");
-    } else {
-      html.classList.add("dark");
-    }
-    setDark(!dark);
+    html.classList.toggle("dark", next);
+    // Sync AG Grid theme mode — it reads data-ag-theme-mode, not .dark class
+    html.dataset.agThemeMode = next ? "dark" : "light";
+    setDark(next);
   };
 
   const linkClass = useCallback(

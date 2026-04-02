@@ -59,14 +59,15 @@ import { Skeleton } from "../components/ui/skeleton";
 import { Calendar } from "../components/ui/calendar";
 import { DatePicker } from "../components/ui/date-picker";
 import { Slider } from "../components/ui/slider";
+import { AgGridReact } from "ag-grid-react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table";
+  AllCommunityModule,
+  ModuleRegistry,
+  type ColDef,
+} from "ag-grid-community";
+import { marketsGridTheme } from "@marketsui/tokens/ag-grid-theme";
+
+ModuleRegistry.registerModules([AllCommunityModule]);
 import { Textarea } from "../components/ui/textarea";
 import { Toggle } from "../components/ui/toggle";
 import { ToggleGroup, ToggleGroupItem } from "../components/ui/toggle-group";
@@ -1032,12 +1033,90 @@ function ProgressSliderSection() {
 const PNL_POSITIVE_STYLE = { color: "hsl(var(--mdl-pnl-positive))" } as const;
 const PNL_NEGATIVE_STYLE = { color: "hsl(var(--mdl-pnl-negative))" } as const;
 
-const positions = [
-  { symbol: "AAPL", qty: 500, price: 182.45, pnl: 1234.56 },
-  { symbol: "GOOGL", qty: 200, price: 141.82, pnl: -567.89 },
-  { symbol: "MSFT", qty: 350, price: 378.91, pnl: 891.23 },
-  { symbol: "TSLA", qty: 100, price: 248.12, pnl: -234.56 },
-  { symbol: "AMZN", qty: 150, price: 178.65, pnl: 456.78 },
+interface PositionRow {
+  symbol: string;
+  side: "Buy" | "Sell";
+  qty: number;
+  avgPrice: number;
+  lastPrice: number;
+  pnl: number;
+  status: "Filled" | "Partial" | "Working";
+  exchange: string;
+}
+
+const positions: PositionRow[] = [
+  { symbol: "AAPL", side: "Buy", qty: 500, avgPrice: 182.45, lastPrice: 185.92, pnl: 1735.00, status: "Filled", exchange: "NASDAQ" },
+  { symbol: "GOOGL", side: "Sell", qty: 200, avgPrice: 141.82, lastPrice: 144.50, pnl: -536.00, status: "Filled", exchange: "NASDAQ" },
+  { symbol: "MSFT", side: "Buy", qty: 350, avgPrice: 378.91, lastPrice: 381.45, pnl: 889.00, status: "Filled", exchange: "NASDAQ" },
+  { symbol: "TSLA", side: "Sell", qty: 100, avgPrice: 248.12, lastPrice: 251.30, pnl: -318.00, status: "Partial", exchange: "NASDAQ" },
+  { symbol: "AMZN", side: "Buy", qty: 150, avgPrice: 178.65, lastPrice: 181.20, pnl: 382.50, status: "Filled", exchange: "NASDAQ" },
+  { symbol: "META", side: "Buy", qty: 300, avgPrice: 485.20, lastPrice: 492.10, pnl: 2070.00, status: "Filled", exchange: "NASDAQ" },
+  { symbol: "NVDA", side: "Buy", qty: 250, avgPrice: 875.40, lastPrice: 889.15, pnl: 3437.50, status: "Filled", exchange: "NASDAQ" },
+  { symbol: "JPM", side: "Sell", qty: 400, avgPrice: 198.30, lastPrice: 196.80, pnl: 600.00, status: "Filled", exchange: "NYSE" },
+  { symbol: "BAC", side: "Buy", qty: 800, avgPrice: 35.42, lastPrice: 34.90, pnl: -416.00, status: "Partial", exchange: "NYSE" },
+  { symbol: "GS", side: "Buy", qty: 120, avgPrice: 465.80, lastPrice: 471.25, pnl: 654.00, status: "Filled", exchange: "NYSE" },
+  { symbol: "V", side: "Sell", qty: 180, avgPrice: 278.50, lastPrice: 280.15, pnl: -297.00, status: "Working", exchange: "NYSE" },
+  { symbol: "WMT", side: "Buy", qty: 600, avgPrice: 162.35, lastPrice: 164.80, pnl: 1470.00, status: "Filled", exchange: "NYSE" },
+  { symbol: "DIS", side: "Sell", qty: 350, avgPrice: 112.40, lastPrice: 110.85, pnl: 542.50, status: "Filled", exchange: "NYSE" },
+  { symbol: "NFLX", side: "Buy", qty: 90, avgPrice: 628.90, lastPrice: 635.20, pnl: 567.00, status: "Filled", exchange: "NASDAQ" },
+  { symbol: "AMD", side: "Sell", qty: 450, avgPrice: 164.75, lastPrice: 167.30, pnl: -1147.50, status: "Partial", exchange: "NASDAQ" },
+  { symbol: "INTC", side: "Buy", qty: 1000, avgPrice: 31.20, lastPrice: 30.85, pnl: -350.00, status: "Working", exchange: "NASDAQ" },
+  { symbol: "CRM", side: "Buy", qty: 200, avgPrice: 272.60, lastPrice: 278.40, pnl: 1160.00, status: "Filled", exchange: "NYSE" },
+];
+
+const positionColDefs: ColDef<PositionRow>[] = [
+  { field: "symbol", headerName: "Symbol", pinned: "left", minWidth: 100 },
+  {
+    field: "side",
+    headerName: "Side",
+    minWidth: 80,
+    cellStyle: (params) => ({
+      color: params.value === "Buy" ? "hsl(158, 68%, 44%)" : "hsl(350, 89%, 60%)",
+      fontWeight: 500,
+    }),
+  },
+  {
+    field: "qty",
+    headerName: "Qty",
+    minWidth: 90,
+    type: "rightAligned",
+    cellStyle: { fontFamily: "var(--font-mono, ui-monospace, monospace)" },
+    valueFormatter: (params) => params.value?.toLocaleString() ?? "",
+  },
+  {
+    field: "avgPrice",
+    headerName: "Avg Price",
+    minWidth: 110,
+    type: "rightAligned",
+    cellStyle: { fontFamily: "var(--font-mono, ui-monospace, monospace)" },
+    valueFormatter: (params) => params.value?.toFixed(2) ?? "",
+  },
+  {
+    field: "lastPrice",
+    headerName: "Last Price",
+    minWidth: 110,
+    type: "rightAligned",
+    cellStyle: { fontFamily: "var(--font-mono, ui-monospace, monospace)" },
+    valueFormatter: (params) => params.value?.toFixed(2) ?? "",
+  },
+  {
+    field: "pnl",
+    headerName: "P&L",
+    minWidth: 120,
+    type: "rightAligned",
+    cellStyle: (params) => ({
+      color: params.value >= 0 ? "hsl(158, 68%, 44%)" : "hsl(350, 89%, 60%)",
+      fontWeight: 500,
+      fontFamily: "var(--font-mono, ui-monospace, monospace)",
+    }),
+    valueFormatter: (params) => {
+      if (params.value == null) return "";
+      const sign = params.value >= 0 ? "+" : "";
+      return `${sign}${params.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    },
+  },
+  { field: "status", headerName: "Status", minWidth: 100 },
+  { field: "exchange", headerName: "Exchange", minWidth: 100 },
 ];
 
 function TableSection() {
@@ -1046,45 +1125,25 @@ function TableSection() {
       <CardHeader>
         <div className="flex items-center gap-2">
           <TableIcon className="h-5 w-5 text-primary" />
-          <CardTitle>Table</CardTitle>
+          <CardTitle>Positions Blotter</CardTitle>
         </div>
         <CardDescription>
-          Data tables for displaying positions and trading data.
+          AG Grid with MarketsUI theme — dense layout for trading data
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Symbol</TableHead>
-              <TableHead className="text-right">Qty</TableHead>
-              <TableHead className="text-right">Price</TableHead>
-              <TableHead className="text-right">P&L</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {positions.map((pos) => (
-              <TableRow key={pos.symbol}>
-                <TableCell className="font-medium font-mono">
-                  {pos.symbol}
-                </TableCell>
-                <TableCell className="text-right font-mono">
-                  {pos.qty.toLocaleString()}
-                </TableCell>
-                <TableCell className="text-right font-mono">
-                  {pos.price.toFixed(2)}
-                </TableCell>
-                <TableCell
-                  className="text-right font-mono font-medium"
-                  style={pos.pnl >= 0 ? PNL_POSITIVE_STYLE : PNL_NEGATIVE_STYLE}
-                >
-                  {pos.pnl >= 0 ? "+" : ""}
-                  {pos.pnl.toFixed(2)}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <div style={{ height: 500 }}>
+          <AgGridReact<PositionRow>
+            theme={marketsGridTheme}
+            rowData={positions}
+            columnDefs={positionColDefs}
+            defaultColDef={{ flex: 1, sortable: true, filter: true, resizable: true }}
+            rowHeight={32}
+            headerHeight={36}
+            animateRows={true}
+            suppressRowHoverHighlight={false}
+          />
+        </div>
       </CardContent>
     </Card>
   );
