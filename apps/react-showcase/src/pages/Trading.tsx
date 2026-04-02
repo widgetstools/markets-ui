@@ -327,14 +327,16 @@ const sectorAllocation = [
 ];
 
 // ---------------------------------------------------------------------------
-// Side badge HTML (shared by grids)
+// Side cell style helper (shared by grids)
 // ---------------------------------------------------------------------------
 
-function sideBadgeHtml(value: string, buyLabel: string, sellLabel: string): string {
+function sideCellStyle(value: string, buyLabel: string): Record<string, string | number> {
   const isBuy = value === buyLabel;
-  const bg = isBuy ? "hsl(var(--mdl-success) / 0.15)" : "hsl(var(--mdl-destructive) / 0.15)";
-  const fg = isBuy ? "hsl(var(--mdl-success))" : "hsl(var(--mdl-destructive))";
-  return `<span style="display:inline-flex;align-items:center;padding:1px 8px;border-radius:9999px;font-size:11px;font-weight:600;background:${bg};color:${fg}">${value}</span>`;
+  return {
+    color: isBuy ? CLR_SUCCESS : CLR_DANGER,
+    fontWeight: 600,
+    fontSize: '11px',
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -346,10 +348,7 @@ const positionColDefs: ColDef<Position>[] = [
     field: "side",
     headerName: "Side",
     width: 90,
-    cellRenderer: (params: { value: string }) => {
-      if (!params.value) return null;
-      return sideBadgeHtml(params.value, "LONG", "SHORT");
-    },
+    cellStyle: (params) => sideCellStyle(params.value ?? "", "LONG"),
   },
   { field: "cusip", headerName: "CUSIP", width: 110, cellStyle: () => MONO },
   { field: "issuer", headerName: "Issuer", width: 160 },
@@ -426,10 +425,7 @@ const tradeColDefs: ColDef<Trade>[] = [
     field: "side",
     headerName: "Side",
     width: 80,
-    cellRenderer: (params: { value: string }) => {
-      if (!params.value) return null;
-      return sideBadgeHtml(params.value, "BUY", "SELL");
-    },
+    cellStyle: (params) => sideCellStyle(params.value ?? "", "BUY"),
   },
   { field: "cusip", headerName: "CUSIP", width: 110, cellStyle: () => MONO },
   { field: "issuer", headerName: "Issuer", width: 160 },
@@ -524,10 +520,7 @@ const orderColDefs: ColDef<Order>[] = [
     field: "side",
     headerName: "Side",
     width: 80,
-    cellRenderer: (params: { value: string }) => {
-      if (!params.value) return null;
-      return sideBadgeHtml(params.value, "BUY", "SELL");
-    },
+    cellStyle: (params) => sideCellStyle(params.value ?? "", "BUY"),
   },
   { field: "cusip", headerName: "CUSIP", width: 110, cellStyle: () => MONO },
   { field: "type", headerName: "Type", width: 80 },
@@ -1182,16 +1175,6 @@ function BondDetailPanel({
 void CLR_SUCCESS_BG;
 void CLR_DANGER_BG;
 
-/** Summary panel: PortfolioSummary + SectorAllocationBar */
-function SummaryPanel(_props: IDockviewPanelProps) {
-  return (
-    <div className="p-2 space-y-2 overflow-auto h-full bg-background">
-      <PortfolioSummary />
-      <SectorAllocationBar />
-    </div>
-  );
-}
-
 /** Positions blotter panel */
 function PositionsPanel(
   props: IDockviewPanelProps<{ onRowClick: (pos: Position) => void }>
@@ -1422,7 +1405,6 @@ export default function Trading() {
 
   const components = useMemo(
     () => ({
-      summary: SummaryPanel,
       positions: PositionsPanel,
       activity: ActivityPanel,
       detail: DetailPanel,
@@ -1435,15 +1417,7 @@ export default function Trading() {
       const api = event.api;
       dockviewApiRef.current = api;
 
-      // 1. Summary panel (top, full width)
-      const summaryPanel = api.addPanel({
-        id: "summary",
-        component: "summary",
-        title: "Portfolio Summary",
-        params: {},
-      });
-
-      // 2. Positions blotter (center, below summary)
+      // 1. Positions blotter (main center)
       const posPanel = api.addPanel({
         id: "positions",
         component: "positions",
@@ -1451,25 +1425,20 @@ export default function Trading() {
         params: {
           onRowClick: (pos: Position) => showDetailPanel(pos),
         },
-        position: { direction: "below" as const, referencePanel: summaryPanel },
       });
 
-      // 3. Activity panel (bottom, below positions)
-      api.addPanel({
+      // 2. Activity panel (below positions, ~40% height)
+      const actPanel = api.addPanel({
         id: "activity",
         component: "activity",
         title: "Activity",
         params: { orders },
         position: { direction: "below" as const, referencePanel: posPanel },
-        initialHeight: 250,
       });
 
-      // Set summary to a fixed-ish height
-      // The summary group will be at the top; resize it
-      const summaryGroup = summaryPanel.group;
-      if (summaryGroup) {
-        api.getGroup(summaryGroup.id)?.api.setSize({ height: 140 });
-      }
+      // Lock groups so panels are not closable / draggable
+      posPanel.group.locked = true;
+      actPanel.group.locked = true;
     },
     [orders, showDetailPanel]
   );
@@ -1517,6 +1486,12 @@ export default function Trading() {
         prefill={orderPrefill}
         onSubmit={handleOrderSubmit}
       />
+
+      {/* Portfolio Summary — static header, NOT in dockview */}
+      <div className="px-4 py-2 space-y-2 shrink-0 border-b border-border">
+        <PortfolioSummary />
+        <SectorAllocationBar />
+      </div>
 
       {/* Dockview container — fills remaining height */}
       <div className="flex-1 min-h-0">
