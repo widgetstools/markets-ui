@@ -4,7 +4,6 @@ import {
   TrendingDown,
   DollarSign,
   Shield,
-  BarChart3,
   X,
   Plus,
 } from "lucide-react";
@@ -22,7 +21,6 @@ import {
 } from "../components/ui/tabs";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import { Separator } from "../components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -32,7 +30,6 @@ import {
 } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { Textarea } from "../components/ui/textarea";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { AgGridReact } from "ag-grid-react";
 import {
@@ -43,6 +40,21 @@ import {
 import { marketsGridTheme } from "@marketsui/tokens/ag-grid-theme";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
+
+// ---------------------------------------------------------------------------
+// Color constants — use CSS variable HSL strings for consistency
+// ---------------------------------------------------------------------------
+
+const CLR_SUCCESS = "hsl(var(--mdl-success))";
+const CLR_SUCCESS_BG = "hsl(var(--mdl-success) / 0.15)";
+const CLR_DANGER = "hsl(var(--mdl-destructive))";
+const CLR_DANGER_BG = "hsl(var(--mdl-destructive) / 0.15)";
+const CLR_WARN = "#EAB308";
+
+// Reusable inline style constants
+const MONO: Record<string, string> = { fontFamily: "var(--font-mono, ui-monospace, monospace)", fontFeatureSettings: "'tnum'" };
+const MONO_RIGHT: Record<string, string> = { ...MONO, textAlign: "right" };
+const TABNUM: React.CSSProperties = { fontFeatureSettings: "'tnum'" };
 
 // ---------------------------------------------------------------------------
 // Types
@@ -210,13 +222,11 @@ const riskData: Risk[] = [
 // Helpers
 // ---------------------------------------------------------------------------
 
-const MONO_STYLE = { fontFamily: "var(--font-mono, ui-monospace, monospace)" };
-
 function getRatingColor(rating: string): string {
-  if (rating === "AAA" || rating.startsWith("AA")) return "hsl(158, 68%, 44%)";
-  if (rating.startsWith("A")) return "#EAB308";
+  if (rating === "AAA" || rating.startsWith("AA")) return CLR_SUCCESS;
+  if (rating.startsWith("A")) return CLR_WARN;
   if (rating.startsWith("BBB")) return "#F97316";
-  return "hsl(350, 89%, 60%)";
+  return CLR_DANGER;
 }
 
 function formatNumber(value: number): string {
@@ -268,18 +278,15 @@ function generateLadderLevels(position: Position): LadderLevel[] {
 
   const levels: LadderLevel[] = [];
 
-  // Ask levels (10): best ask is index 0 (lowest ask), worst ask is index 9 (highest)
   for (let i = 0; i < 10; i++) {
     const price = bestAsk + i * tick;
-    // Size tapers: best level 15-25M, worst level 1-3M
-    const factor = 1 - i / 9; // 1 at best, 0 at worst
-    const minSize = 1 + factor * 14; // 1M to 15M
-    const maxSize = 3 + factor * 22; // 3M to 25M
+    const factor = 1 - i / 9;
+    const minSize = 1 + factor * 14;
+    const maxSize = 3 + factor * 22;
     const size = minSize + rng() * (maxSize - minSize);
     levels.push({ price: Math.round(price * 1000) / 1000, bidSize: 0, askSize: Math.round(size * 100) / 100 });
   }
 
-  // Bid levels (10): best bid is index 0 (highest bid), worst bid is index 9 (lowest)
   for (let i = 0; i < 10; i++) {
     const price = bestBid - i * tick;
     const factor = 1 - i / 9;
@@ -289,7 +296,6 @@ function generateLadderLevels(position: Position): LadderLevel[] {
     levels.push({ price: Math.round(price * 1000) / 1000, bidSize: Math.round(size * 100) / 100, askSize: 0 });
   }
 
-  // Sort by price descending (asks on top, bids on bottom)
   levels.sort((a, b) => b.price - a.price);
   return levels;
 }
@@ -300,7 +306,306 @@ function formatSize(val: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// Component: Order Ticket Dialog
+// Sector Allocation Data
+// ---------------------------------------------------------------------------
+
+const sectorAllocation = [
+  { sector: "Financials", pct: 24.5, color: "#6366F1" },
+  { sector: "Technology", pct: 21.2, color: "#06B6D4" },
+  { sector: "Government", pct: 18.1, color: "#8B5CF6" },
+  { sector: "Healthcare", pct: 11.0, color: "#10B981" },
+  { sector: "Industrials", pct: 10.8, color: "#F59E0B" },
+  { sector: "Consumer", pct: 10.4, color: "#EF4444" },
+  { sector: "Media", pct: 3.9, color: "#EC4899" },
+];
+
+// ---------------------------------------------------------------------------
+// Side badge HTML (shared by grids)
+// ---------------------------------------------------------------------------
+
+function sideBadgeHtml(value: string, buyLabel: string, sellLabel: string): string {
+  const isBuy = value === buyLabel;
+  const bg = isBuy ? "hsl(var(--mdl-success) / 0.15)" : "hsl(var(--mdl-destructive) / 0.15)";
+  const fg = isBuy ? "hsl(var(--mdl-success))" : "hsl(var(--mdl-destructive))";
+  return `<span style="display:inline-flex;align-items:center;padding:1px 8px;border-radius:9999px;font-size:11px;font-weight:600;background:${bg};color:${fg}">${value}</span>`;
+}
+
+// ---------------------------------------------------------------------------
+// Column Definitions: Positions
+// ---------------------------------------------------------------------------
+
+const positionColDefs: ColDef<Position>[] = [
+  {
+    field: "side",
+    headerName: "Side",
+    width: 90,
+    cellRenderer: (params: { value: string }) => {
+      if (!params.value) return null;
+      return sideBadgeHtml(params.value, "LONG", "SHORT");
+    },
+  },
+  { field: "cusip", headerName: "CUSIP", width: 110, cellStyle: () => MONO },
+  { field: "issuer", headerName: "Issuer", width: 160 },
+  { field: "description", headerName: "Description", width: 170, cellStyle: () => MONO },
+  {
+    field: "rating",
+    headerName: "Rating",
+    width: 85,
+    cellStyle: (params) => ({
+      color: getRatingColor(params.value ?? ""),
+      fontWeight: 600,
+    }),
+  },
+  {
+    field: "coupon",
+    headerName: "Coupon",
+    width: 90,
+    cellStyle: () => MONO,
+    valueFormatter: (params) => params.value != null ? params.value.toFixed(3) + "%" : "",
+  },
+  { field: "maturity", headerName: "Maturity", width: 110, cellStyle: () => MONO },
+  {
+    field: "notional",
+    headerName: "Notional",
+    width: 120,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null ? formatNumber(params.value) : "",
+  },
+  {
+    field: "price",
+    headerName: "Price",
+    width: 85,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null ? params.value.toFixed(2) : "",
+  },
+  {
+    field: "mktValue",
+    headerName: "Mkt Value",
+    width: 120,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null ? formatNumber(params.value) : "",
+  },
+  {
+    field: "yield",
+    headerName: "Yield",
+    width: 80,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null ? params.value.toFixed(2) + "%" : "",
+  },
+  {
+    field: "duration",
+    headerName: "Duration",
+    width: 90,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null ? params.value.toFixed(1) : "",
+  },
+  {
+    field: "dv01",
+    headerName: "DV01",
+    width: 100,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null ? "$" + formatNumber(params.value) : "",
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Column Definitions: Trades
+// ---------------------------------------------------------------------------
+
+const tradeColDefs: ColDef<Trade>[] = [
+  { field: "tradeId", headerName: "Trade ID", width: 110, cellStyle: () => MONO },
+  { field: "time", headerName: "Time", width: 100, cellStyle: () => MONO },
+  {
+    field: "side",
+    headerName: "Side",
+    width: 80,
+    cellRenderer: (params: { value: string }) => {
+      if (!params.value) return null;
+      return sideBadgeHtml(params.value, "BUY", "SELL");
+    },
+  },
+  { field: "cusip", headerName: "CUSIP", width: 110, cellStyle: () => MONO },
+  { field: "issuer", headerName: "Issuer", width: 160 },
+  {
+    field: "qty",
+    headerName: "Qty",
+    width: 120,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null ? formatNumber(params.value) : "",
+  },
+  {
+    field: "price",
+    headerName: "Price",
+    width: 85,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null ? params.value.toFixed(2) : "",
+  },
+  {
+    field: "status",
+    headerName: "Status",
+    width: 100,
+    cellStyle: (params) => ({
+      color: params.value === "Filled" ? CLR_SUCCESS : params.value === "Partial" ? CLR_WARN : "",
+      fontWeight: 600,
+    }),
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Column Definitions: RFQs
+// ---------------------------------------------------------------------------
+
+const rfqColDefs: ColDef<RFQ>[] = [
+  { field: "rfqId", headerName: "RFQ ID", width: 100, cellStyle: () => MONO },
+  { field: "bond", headerName: "Bond", width: 150, cellStyle: () => MONO },
+  {
+    field: "side",
+    headerName: "Side",
+    width: 80,
+    cellStyle: (params) => ({
+      color: params.value === "BID" ? CLR_SUCCESS : CLR_WARN,
+      fontWeight: 600,
+    }),
+  },
+  {
+    field: "qty",
+    headerName: "Qty",
+    width: 110,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null ? formatNumber(params.value) : "",
+  },
+  {
+    field: "bid",
+    headerName: "Bid",
+    width: 80,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null ? params.value.toFixed(2) : "",
+  },
+  {
+    field: "offer",
+    headerName: "Offer",
+    width: 80,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null ? params.value.toFixed(2) : "",
+  },
+  {
+    field: "spread",
+    headerName: "Spread",
+    width: 80,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null ? params.value.toFixed(2) : "",
+  },
+  {
+    field: "status",
+    headerName: "Status",
+    width: 90,
+    cellStyle: (params) => ({
+      color: params.value === "Done" ? CLR_SUCCESS : params.value === "Active" ? CLR_WARN : "hsl(var(--muted-foreground))",
+      fontWeight: 600,
+    }),
+  },
+  { field: "dealer", headerName: "Dealer", width: 140 },
+];
+
+// ---------------------------------------------------------------------------
+// Column Definitions: Orders
+// ---------------------------------------------------------------------------
+
+const orderColDefs: ColDef<Order>[] = [
+  { field: "orderId", headerName: "Order ID", width: 110, cellStyle: () => MONO },
+  {
+    field: "side",
+    headerName: "Side",
+    width: 80,
+    cellRenderer: (params: { value: string }) => {
+      if (!params.value) return null;
+      return sideBadgeHtml(params.value, "BUY", "SELL");
+    },
+  },
+  { field: "cusip", headerName: "CUSIP", width: 110, cellStyle: () => MONO },
+  { field: "type", headerName: "Type", width: 80 },
+  {
+    field: "qty",
+    headerName: "Qty",
+    width: 120,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null ? formatNumber(params.value) : "",
+  },
+  {
+    field: "limit",
+    headerName: "Limit",
+    width: 85,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null && params.value > 0 ? params.value.toFixed(2) : "MKT",
+  },
+  {
+    field: "status",
+    headerName: "Status",
+    width: 100,
+    cellStyle: (params) => ({
+      color: params.value === "Filled" ? CLR_SUCCESS : params.value === "Working" ? CLR_WARN : params.value === "Partial" ? "#F97316" : params.value === "Cancelled" ? CLR_DANGER : "",
+      fontWeight: 600,
+    }),
+  },
+  { field: "time", headerName: "Time", width: 100, cellStyle: () => MONO },
+];
+
+// ---------------------------------------------------------------------------
+// Column Definitions: Risk
+// ---------------------------------------------------------------------------
+
+const riskColDefs: ColDef<Risk>[] = [
+  { field: "cusip", headerName: "CUSIP", width: 110, cellStyle: () => MONO },
+  { field: "issuer", headerName: "Issuer", width: 160 },
+  {
+    field: "dv01",
+    headerName: "DV01",
+    width: 100,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null ? "$" + formatNumber(params.value) : "",
+  },
+  {
+    field: "cr01",
+    headerName: "CR01",
+    width: 100,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null ? "$" + formatNumber(params.value) : "",
+  },
+  {
+    field: "spreadDuration",
+    headerName: "Sprd Dur",
+    width: 95,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null ? params.value.toFixed(1) : "",
+  },
+  {
+    field: "cs01",
+    headerName: "CS01",
+    width: 100,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null ? "$" + formatNumber(params.value) : "",
+  },
+  {
+    field: "var",
+    headerName: "VaR",
+    width: 110,
+    cellStyle: () => MONO_RIGHT,
+    valueFormatter: (params) => params.value != null ? "$" + formatNumber(params.value) : "",
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Default Column Definition
+// ---------------------------------------------------------------------------
+
+const defaultColDef: ColDef = {
+  sortable: true,
+  filter: true,
+  resizable: true,
+};
+
+// ---------------------------------------------------------------------------
+// Component: Order Ticket Dialog (compact, dense)
 // ---------------------------------------------------------------------------
 
 function OrderTicketDialog({
@@ -321,16 +626,13 @@ function OrderTicketDialog({
   const [limitPrice, setLimitPrice] = useState(prefill?.limitPrice?.toFixed(3) ?? "");
   const [tif, setTif] = useState("DAY");
   const [account, setAccount] = useState("CREDIT-MAIN");
-  const [notes, setNotes] = useState("");
 
-  // Resolve issuer from positions data
   const resolvedIssuer = useMemo(() => {
     if (prefill?.issuer) return prefill.issuer;
     const pos = positions.find((p) => p.cusip === cusip);
     return pos?.issuer ?? "";
   }, [cusip, prefill?.issuer]);
 
-  // Reset form when prefill changes
   const prefillKey = `${prefill?.cusip}-${prefill?.side}-${prefill?.limitPrice}`;
   const [lastPrefillKey, setLastPrefillKey] = useState(prefillKey);
   if (prefillKey !== lastPrefillKey) {
@@ -363,143 +665,149 @@ function OrderTicketDialog({
   };
 
   const selectClass =
-    "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring";
+    "flex h-8 w-full rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring";
+
+  const topBorderColor = side === "BUY" ? CLR_SUCCESS : CLR_DANGER;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>New Order</DialogTitle>
+      <DialogContent className="max-w-[380px] p-0 gap-0 overflow-hidden">
+        {/* Colored top accent bar */}
+        <div className="h-0.5" style={{ background: topBorderColor }} />
+
+        <DialogHeader className="px-4 pt-3 pb-2">
+          <DialogTitle className="text-sm font-semibold">New Order</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-2">
-          {/* Side */}
-          <div className="space-y-1.5">
-            <Label className="text-sm">Side</Label>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant={side === "BUY" ? "default" : "outline"}
-                className={side === "BUY" ? "flex-1 bg-[hsl(158,68%,44%)] hover:bg-[hsl(158,68%,38%)] text-white" : "flex-1"}
-                onClick={() => setSide("BUY")}
-              >
-                Buy
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={side === "SELL" ? "default" : "outline"}
-                className={side === "SELL" ? "flex-1 bg-[hsl(350,89%,60%)] hover:bg-[hsl(350,89%,54%)] text-white" : "flex-1"}
-                onClick={() => setSide("SELL")}
-              >
-                Sell
-              </Button>
-            </div>
-          </div>
 
-          {/* CUSIP */}
-          <div className="space-y-1.5">
-            <Label className="text-sm">CUSIP</Label>
-            <Input
-              value={cusip}
-              onChange={(e) => setCusip(e.target.value)}
-              placeholder="e.g. 037833AK6"
-              className="font-mono"
-            />
-          </div>
-
-          {/* Issuer (read-only) */}
-          {resolvedIssuer && (
-            <div className="space-y-1.5">
-              <Label className="text-sm">Issuer</Label>
-              <p className="text-sm font-medium px-3 py-2 rounded-md bg-muted">{resolvedIssuer}</p>
-            </div>
-          )}
-
-          {/* Order Type */}
-          <div className="space-y-1.5">
-            <Label className="text-sm">Order Type</Label>
-            <select
-              value={orderType}
-              onChange={(e) => setOrderType(e.target.value as "Limit" | "Market" | "Stop")}
-              className={selectClass}
+        <div className="px-4 pb-3 space-y-3">
+          {/* Side toggle — connected pills */}
+          <div className="flex rounded-md overflow-hidden border border-border h-7">
+            <button
+              type="button"
+              className="flex-1 text-xs font-semibold transition-colors"
+              style={{
+                background: side === "BUY" ? CLR_SUCCESS : "transparent",
+                color: side === "BUY" ? "#fff" : "hsl(var(--muted-foreground))",
+              }}
+              onClick={() => setSide("BUY")}
             >
-              <option value="Limit">Limit</option>
-              <option value="Market">Market</option>
-              <option value="Stop">Stop</option>
-            </select>
+              Buy
+            </button>
+            <button
+              type="button"
+              className="flex-1 text-xs font-semibold transition-colors border-l border-border"
+              style={{
+                background: side === "SELL" ? CLR_DANGER : "transparent",
+                color: side === "SELL" ? "#fff" : "hsl(var(--muted-foreground))",
+              }}
+              onClick={() => setSide("SELL")}
+            >
+              Sell
+            </button>
           </div>
 
-          {/* Quantity */}
-          <div className="space-y-1.5">
-            <Label className="text-sm">Quantity ($M)</Label>
-            <Input
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              placeholder="e.g. 5"
-              className="font-mono"
-            />
-          </div>
-
-          {/* Limit Price (only for Limit/Stop) */}
-          {orderType !== "Market" && (
-            <div className="space-y-1.5">
-              <Label className="text-sm">Limit Price</Label>
+          {/* Row 1: CUSIP + Issuer */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">CUSIP</Label>
               <Input
-                type="number"
-                step="0.001"
-                value={limitPrice}
-                onChange={(e) => setLimitPrice(e.target.value)}
-                placeholder="e.g. 98.250"
-                className="font-mono"
+                value={cusip}
+                onChange={(e) => setCusip(e.target.value)}
+                placeholder="037833AK6"
+                className="h-8 text-xs font-mono"
               />
             </div>
-          )}
+            <div className="space-y-1">
+              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Issuer</Label>
+              <div className="h-8 flex items-center px-2 rounded-md bg-muted text-xs font-medium truncate">
+                {resolvedIssuer || "\u2014"}
+              </div>
+            </div>
+          </div>
 
-          {/* Time in Force */}
-          <div className="space-y-1.5">
-            <Label className="text-sm">Time in Force</Label>
-            <select value={tif} onChange={(e) => setTif(e.target.value)} className={selectClass}>
-              <option value="DAY">Day</option>
-              <option value="GTC">GTC</option>
-              <option value="IOC">IOC</option>
-              <option value="FOK">FOK</option>
-            </select>
+          {/* Row 2: Type + TIF */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Type</Label>
+              <select
+                value={orderType}
+                onChange={(e) => setOrderType(e.target.value as "Limit" | "Market" | "Stop")}
+                className={selectClass}
+              >
+                <option value="Limit">Limit</option>
+                <option value="Market">Market</option>
+                <option value="Stop">Stop</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">TIF</Label>
+              <select value={tif} onChange={(e) => setTif(e.target.value)} className={selectClass}>
+                <option value="DAY">Day</option>
+                <option value="GTC">GTC</option>
+                <option value="IOC">IOC</option>
+                <option value="FOK">FOK</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Row 3: Qty + Limit */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Qty ($M)</Label>
+              <Input
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="5"
+                className="h-8 text-xs font-mono"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                {orderType === "Market" ? "Price" : "Limit"}
+              </Label>
+              {orderType === "Market" ? (
+                <div className="h-8 flex items-center px-2 rounded-md bg-muted text-xs font-mono text-muted-foreground">
+                  MKT
+                </div>
+              ) : (
+                <Input
+                  type="number"
+                  step="0.001"
+                  value={limitPrice}
+                  onChange={(e) => setLimitPrice(e.target.value)}
+                  placeholder="98.250"
+                  className="h-8 text-xs font-mono"
+                />
+              )}
+            </div>
           </div>
 
           {/* Account */}
-          <div className="space-y-1.5">
-            <Label className="text-sm">Account</Label>
+          <div className="space-y-1">
+            <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Account</Label>
             <select value={account} onChange={(e) => setAccount(e.target.value)} className={selectClass}>
               <option value="CREDIT-MAIN">CREDIT-MAIN</option>
               <option value="CREDIT-PROP">CREDIT-PROP</option>
               <option value="RATES-HEDGE">RATES-HEDGE</option>
             </select>
           </div>
-
-          {/* Notes */}
-          <div className="space-y-1.5">
-            <Label className="text-sm">Notes</Label>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Optional notes..."
-              rows={2}
-            />
-          </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            className="bg-[hsl(var(--mdl-accent))] text-white hover:bg-[hsl(var(--mdl-accent))]/90"
-          >
-            Submit Order
-          </Button>
+        <DialogFooter className="px-4 pb-3 pt-0">
+          <div className="flex gap-2 justify-end w-full">
+            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              className="h-7 text-xs"
+              style={{ background: topBorderColor, color: "#fff" }}
+              onClick={handleSubmit}
+            >
+              Submit
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -507,19 +815,15 @@ function OrderTicketDialog({
 }
 
 // ---------------------------------------------------------------------------
-// Component: Price Ladder
+// Component: Price Ladder (monospace table, tight rows, cumulative size)
 // ---------------------------------------------------------------------------
 
 function PriceLadder({
   position,
   onPriceClick,
-  onBuy,
-  onSell,
 }: {
   position: Position;
   onPriceClick: (price: number, side: "BUY" | "SELL") => void;
-  onBuy: () => void;
-  onSell: () => void;
 }) {
   const levels = useMemo(() => generateLadderLevels(position), [position]);
   const isIG = IG_RATINGS.has(position.rating);
@@ -529,92 +833,208 @@ function PriceLadder({
   const maxBidSize = Math.max(...levels.map((l) => l.bidSize));
   const maxAskSize = Math.max(...levels.map((l) => l.askSize));
 
-  // Find best bid / best ask
   const bestAskLevel = levels.filter((l) => l.askSize > 0).at(-1);
   const bestBidLevel = levels.filter((l) => l.bidSize > 0).at(0);
+
+  // Compute cumulative sizes
+  const askLevels = levels.filter((l) => l.askSize > 0); // sorted desc by price
+  const bidLevels = levels.filter((l) => l.bidSize > 0); // sorted desc by price
+
+  const cumAsk = new Map<number, number>();
+  let cumAskTotal = 0;
+  // Accumulate from worst (top) to best (bottom)
+  for (const l of askLevels) {
+    cumAskTotal += l.askSize;
+    cumAsk.set(l.price, cumAskTotal);
+  }
+
+  const cumBid = new Map<number, number>();
+  let cumBidTotal = 0;
+  // Accumulate from best (top) to worst (bottom)
+  for (const l of bidLevels) {
+    cumBidTotal += l.bidSize;
+    cumBid.set(l.price, cumBidTotal);
+  }
 
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-3 py-2 border-b">
-        <p className="text-sm font-semibold">{position.description}</p>
-        <p className="text-xs text-muted-foreground">{position.issuer} &middot; {position.rating}</p>
+      <div className="px-3 py-1.5 border-b">
+        <p className="text-xs font-semibold" style={MONO}>{position.description}</p>
+        <p className="text-[10px] text-muted-foreground">{position.issuer} &middot; {position.rating}</p>
       </div>
 
       {/* Column Headers */}
-      <div className="grid grid-cols-3 px-3 py-1.5 text-xs text-muted-foreground font-medium border-b">
-        <span className="text-right">Bid Sz</span>
+      <div
+        className="grid px-2 py-1 text-[10px] text-muted-foreground font-medium border-b uppercase tracking-wider"
+        style={{ gridTemplateColumns: "1fr 1fr 70px 1fr 1fr" }}
+      >
+        <span className="text-right">Cum</span>
+        <span className="text-right">Bid</span>
         <span className="text-center">Price</span>
-        <span className="text-right">Ask Sz</span>
+        <span className="text-right">Ask</span>
+        <span className="text-right">Cum</span>
       </div>
 
       {/* Levels */}
       <ScrollArea className="flex-1">
-        <div className="divide-y divide-border/50">
+        <div>
           {levels.map((level, i) => {
             const isAsk = level.askSize > 0;
             const isBid = level.bidSize > 0;
             const isBestBid = bestBidLevel && level.price === bestBidLevel.price && isBid;
             const isBestAsk = bestAskLevel && level.price === bestAskLevel.price && isAsk;
 
-            // Background intensity based on relative size
+            // Detect spread gap row
+            const nextLevel = levels[i + 1];
+            const isSpreadRow = isAsk && nextLevel && nextLevel.bidSize > 0;
+
             let bg = "transparent";
             if (isAsk) {
               const intensity = level.askSize / maxAskSize;
-              const alpha = isBestAsk ? Math.max(intensity * 0.2, 0.12) : intensity * 0.15;
-              bg = `hsl(350 89% 60% / ${alpha.toFixed(3)})`;
+              const alpha = isBestAsk ? Math.max(intensity * 0.2, 0.12) : intensity * 0.12;
+              bg = `hsl(var(--mdl-destructive) / ${alpha.toFixed(3)})`;
             } else if (isBid) {
               const intensity = level.bidSize / maxBidSize;
-              const alpha = isBestBid ? Math.max(intensity * 0.2, 0.12) : intensity * 0.15;
-              bg = `hsl(158 68% 44% / ${alpha.toFixed(3)})`;
+              const alpha = isBestBid ? Math.max(intensity * 0.2, 0.12) : intensity * 0.12;
+              bg = `hsl(var(--mdl-success) / ${alpha.toFixed(3)})`;
             }
 
             return (
-              <div
-                key={i}
-                className="grid grid-cols-3 px-3 py-1 cursor-pointer hover:bg-accent/50 transition-colors"
-                style={{ background: bg }}
-                onClick={() => onPriceClick(level.price, isAsk ? "BUY" : "SELL")}
-              >
-                <span className="text-right font-mono text-xs">
-                  {isBid ? formatSize(level.bidSize) : ""}
-                </span>
-                <span
-                  className={`text-center font-mono text-xs ${
-                    isBestBid ? "font-bold text-[hsl(158,68%,44%)]" : isBestAsk ? "font-bold text-[hsl(350,89%,60%)]" : ""
-                  }`}
+              <div key={i}>
+                <div
+                  className="grid px-2 cursor-pointer hover:bg-accent/50 transition-colors"
+                  style={{
+                    gridTemplateColumns: "1fr 1fr 70px 1fr 1fr",
+                    background: bg,
+                    height: 24,
+                    alignItems: "center",
+                    borderLeft: isBestBid ? `2px solid ${CLR_SUCCESS}` : isBestAsk ? `2px solid ${CLR_DANGER}` : "2px solid transparent",
+                  }}
+                  onClick={() => onPriceClick(level.price, isAsk ? "BUY" : "SELL")}
                 >
-                  {level.price.toFixed(3)}
-                </span>
-                <span className="text-right font-mono text-xs">
-                  {isAsk ? formatSize(level.askSize) : ""}
-                </span>
+                  <span className="text-right font-mono text-[11px] text-muted-foreground" style={TABNUM}>
+                    {isBid ? formatSize(cumBid.get(level.price) ?? 0) : ""}
+                  </span>
+                  <span className="text-right font-mono text-[11px]" style={TABNUM}>
+                    {isBid ? formatSize(level.bidSize) : ""}
+                  </span>
+                  <span
+                    className={`text-center font-mono text-[11px] ${
+                      isBestBid ? "font-bold" : isBestAsk ? "font-bold" : ""
+                    }`}
+                    style={{
+                      ...TABNUM,
+                      color: isBestBid ? CLR_SUCCESS : isBestAsk ? CLR_DANGER : undefined,
+                    }}
+                  >
+                    {level.price.toFixed(3)}
+                  </span>
+                  <span className="text-right font-mono text-[11px]" style={TABNUM}>
+                    {isAsk ? formatSize(level.askSize) : ""}
+                  </span>
+                  <span className="text-right font-mono text-[11px] text-muted-foreground" style={TABNUM}>
+                    {isAsk ? formatSize(cumAsk.get(level.price) ?? 0) : ""}
+                  </span>
+                </div>
+                {/* Spread indicator between best ask and best bid */}
+                {isSpreadRow && (
+                  <div
+                    className="flex items-center justify-center border-y border-dashed border-border/60"
+                    style={{ height: 20 }}
+                  >
+                    <span className="text-[10px] font-mono text-muted-foreground tracking-wide" style={TABNUM}>
+                      Spread: {spreadBps.toFixed(1)} bps
+                    </span>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       </ScrollArea>
+    </div>
+  );
+}
 
-      {/* Spread + buttons */}
-      <div className="border-t px-3 py-2 space-y-2">
-        <p className="text-xs text-muted-foreground text-center font-mono">
-          Spread: {spread.toFixed(3)} ({spreadBps.toFixed(1)} bps)
-        </p>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            className="flex-1 bg-[hsl(158,68%,44%)] hover:bg-[hsl(158,68%,38%)] text-white"
-            onClick={onBuy}
+// ---------------------------------------------------------------------------
+// Component: Portfolio Summary Strip (sleek, divider-separated)
+// ---------------------------------------------------------------------------
+
+function PortfolioSummary() {
+  const metrics = [
+    { label: "Total Notional", value: "$139.50M", sub: "12 positions", accent: "hsl(var(--mdl-success))", icon: DollarSign },
+    { label: "Market Value", value: "$137.54M", sub: "Mark-to-market", accent: "hsl(var(--mdl-success))", icon: TrendingUp },
+    { label: "Total P&L", value: "-$1.65M", sub: "-1.18% unrealized", accent: CLR_DANGER, icon: TrendingDown, valueColor: CLR_DANGER },
+    { label: "DV01", value: "$181,327", sub: "Dollar value of 1bp", accent: CLR_WARN, icon: Shield },
+  ];
+
+  return (
+    <div className="flex rounded-lg border bg-card overflow-hidden">
+      {metrics.map((m, i) => (
+        <div
+          key={m.label}
+          className="flex-1 relative px-4 py-3"
+          style={{ borderTop: `2px solid ${m.accent}` }}
+        >
+          {/* Divider */}
+          {i > 0 && (
+            <div className="absolute left-0 top-3 bottom-3 w-px bg-border" />
+          )}
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
+              {m.label}
+            </span>
+            <m.icon className="h-3.5 w-3.5 text-muted-foreground" />
+          </div>
+          <div
+            className="text-xl font-bold font-mono"
+            style={{ ...TABNUM, color: m.valueColor }}
           >
-            Buy
-          </Button>
-          <Button
-            size="sm"
-            className="flex-1 bg-[hsl(350,89%,60%)] hover:bg-[hsl(350,89%,54%)] text-white"
-            onClick={onSell}
-          >
-            Sell
-          </Button>
+            {m.value}
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-0.5">{m.sub}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Component: Sector Allocation Bar (sleek thin bar, inline labels)
+// ---------------------------------------------------------------------------
+
+function SectorAllocationBar() {
+  return (
+    <div className="rounded-lg border bg-card px-4 py-3">
+      <div className="flex items-center justify-between mb-2.5">
+        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
+          Sector Allocation
+        </span>
+      </div>
+      <div className="flex items-center gap-3">
+        {/* Thin bar */}
+        <div className="flex h-[3px] flex-1 overflow-hidden rounded-full">
+          {sectorAllocation.map((s) => (
+            <div
+              key={s.sector}
+              style={{ width: `${s.pct}%`, backgroundColor: s.color }}
+              className="h-full transition-all hover:brightness-125 hover:shadow-[0_0_6px_currentColor]"
+              title={`${s.sector}: ${s.pct}%`}
+            />
+          ))}
+        </div>
+        {/* Inline labels */}
+        <div className="flex flex-wrap gap-x-3 gap-y-0.5 shrink-0">
+          {sectorAllocation.map((s) => (
+            <div key={s.sector} className="flex items-center gap-1 text-[10px] text-muted-foreground">
+              <span
+                className="inline-block h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: s.color }}
+              />
+              {s.sector} {s.pct}%
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -622,397 +1042,7 @@ function PriceLadder({
 }
 
 // ---------------------------------------------------------------------------
-// Sector Allocation Data
-// ---------------------------------------------------------------------------
-
-const sectorAllocation = [
-  { sector: "Financials", pct: 24.5, color: "#6366F1" },
-  { sector: "Technology", pct: 21.2, color: "#06B6D4" },
-  { sector: "Government", pct: 18.1, color: "#8B5CF6" },
-  { sector: "Healthcare", pct: 11.0, color: "#10B981" },
-  { sector: "Industrials", pct: 10.8, color: "#F59E0B" },
-  { sector: "Consumer", pct: 10.4, color: "#EF4444" },
-  { sector: "Media", pct: 3.9, color: "#EC4899" },
-];
-
-// ---------------------------------------------------------------------------
-// Column Definitions: Positions
-// ---------------------------------------------------------------------------
-
-const positionColDefs: ColDef<Position>[] = [
-  {
-    field: "side",
-    headerName: "Side",
-    width: 90,
-    cellRenderer: (params: { value: string }) => {
-      if (!params.value) return null;
-      const isLong = params.value === "LONG";
-      return `<span style="display:inline-flex;align-items:center;padding:1px 8px;border-radius:9999px;font-size:11px;font-weight:600;${isLong ? "background:hsl(158,68%,44%,0.15);color:hsl(158,68%,44%)" : "background:hsl(350,89%,60%,0.15);color:hsl(350,89%,60%)"}">${params.value}</span>`;
-    },
-  },
-  { field: "cusip", headerName: "CUSIP", width: 110, cellStyle: () => MONO_STYLE },
-  { field: "issuer", headerName: "Issuer", width: 160 },
-  { field: "description", headerName: "Description", width: 170, cellStyle: () => MONO_STYLE },
-  {
-    field: "rating",
-    headerName: "Rating",
-    width: 85,
-    cellStyle: (params) => ({
-      color: getRatingColor(params.value ?? ""),
-      fontWeight: 600,
-    }),
-  },
-  {
-    field: "coupon",
-    headerName: "Coupon",
-    width: 90,
-    cellStyle: () => MONO_STYLE,
-    valueFormatter: (params) => params.value != null ? params.value.toFixed(3) + "%" : "",
-  },
-  { field: "maturity", headerName: "Maturity", width: 110, cellStyle: () => MONO_STYLE },
-  {
-    field: "notional",
-    headerName: "Notional",
-    width: 120,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null ? formatNumber(params.value) : "",
-  },
-  {
-    field: "price",
-    headerName: "Price",
-    width: 85,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null ? params.value.toFixed(2) : "",
-  },
-  {
-    field: "mktValue",
-    headerName: "Mkt Value",
-    width: 120,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null ? formatNumber(params.value) : "",
-  },
-  {
-    field: "yield",
-    headerName: "Yield",
-    width: 80,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null ? params.value.toFixed(2) + "%" : "",
-  },
-  {
-    field: "duration",
-    headerName: "Duration",
-    width: 90,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null ? params.value.toFixed(1) : "",
-  },
-  {
-    field: "dv01",
-    headerName: "DV01",
-    width: 100,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null ? "$" + formatNumber(params.value) : "",
-  },
-];
-
-// ---------------------------------------------------------------------------
-// Column Definitions: Trades
-// ---------------------------------------------------------------------------
-
-const tradeColDefs: ColDef<Trade>[] = [
-  { field: "tradeId", headerName: "Trade ID", width: 110, cellStyle: () => MONO_STYLE },
-  { field: "time", headerName: "Time", width: 100, cellStyle: () => MONO_STYLE },
-  {
-    field: "side",
-    headerName: "Side",
-    width: 80,
-    cellRenderer: (params: { value: string }) => {
-      if (!params.value) return null;
-      const isBuy = params.value === "BUY";
-      return `<span style="display:inline-flex;align-items:center;padding:1px 8px;border-radius:9999px;font-size:11px;font-weight:600;${isBuy ? "background:hsl(158,68%,44%,0.15);color:hsl(158,68%,44%)" : "background:hsl(350,89%,60%,0.15);color:hsl(350,89%,60%)"}">${params.value}</span>`;
-    },
-  },
-  { field: "cusip", headerName: "CUSIP", width: 110, cellStyle: () => MONO_STYLE },
-  { field: "issuer", headerName: "Issuer", width: 160 },
-  {
-    field: "qty",
-    headerName: "Qty",
-    width: 120,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null ? formatNumber(params.value) : "",
-  },
-  {
-    field: "price",
-    headerName: "Price",
-    width: 85,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null ? params.value.toFixed(2) : "",
-  },
-  {
-    field: "status",
-    headerName: "Status",
-    width: 100,
-    cellStyle: (params) => ({
-      color: params.value === "Filled" ? "hsl(158, 68%, 44%)" : params.value === "Partial" ? "#EAB308" : "",
-      fontWeight: 600,
-    }),
-  },
-];
-
-// ---------------------------------------------------------------------------
-// Column Definitions: RFQs
-// ---------------------------------------------------------------------------
-
-const rfqColDefs: ColDef<RFQ>[] = [
-  { field: "rfqId", headerName: "RFQ ID", width: 100, cellStyle: () => MONO_STYLE },
-  { field: "bond", headerName: "Bond", width: 150, cellStyle: () => MONO_STYLE },
-  {
-    field: "side",
-    headerName: "Side",
-    width: 80,
-    cellStyle: (params) => ({
-      color: params.value === "BID" ? "hsl(158, 68%, 44%)" : "#EAB308",
-      fontWeight: 600,
-    }),
-  },
-  {
-    field: "qty",
-    headerName: "Qty",
-    width: 110,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null ? formatNumber(params.value) : "",
-  },
-  {
-    field: "bid",
-    headerName: "Bid",
-    width: 80,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null ? params.value.toFixed(2) : "",
-  },
-  {
-    field: "offer",
-    headerName: "Offer",
-    width: 80,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null ? params.value.toFixed(2) : "",
-  },
-  {
-    field: "spread",
-    headerName: "Spread",
-    width: 80,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null ? params.value.toFixed(2) : "",
-  },
-  {
-    field: "status",
-    headerName: "Status",
-    width: 90,
-    cellStyle: (params) => ({
-      color: params.value === "Done" ? "hsl(158, 68%, 44%)" : params.value === "Active" ? "#EAB308" : "hsl(var(--muted-foreground))",
-      fontWeight: 600,
-    }),
-  },
-  { field: "dealer", headerName: "Dealer", width: 140 },
-];
-
-// ---------------------------------------------------------------------------
-// Column Definitions: Orders
-// ---------------------------------------------------------------------------
-
-const orderColDefs: ColDef<Order>[] = [
-  { field: "orderId", headerName: "Order ID", width: 110, cellStyle: () => MONO_STYLE },
-  {
-    field: "side",
-    headerName: "Side",
-    width: 80,
-    cellRenderer: (params: { value: string }) => {
-      if (!params.value) return null;
-      const isBuy = params.value === "BUY";
-      return `<span style="display:inline-flex;align-items:center;padding:1px 8px;border-radius:9999px;font-size:11px;font-weight:600;${isBuy ? "background:hsl(158,68%,44%,0.15);color:hsl(158,68%,44%)" : "background:hsl(350,89%,60%,0.15);color:hsl(350,89%,60%)"}">${params.value}</span>`;
-    },
-  },
-  { field: "cusip", headerName: "CUSIP", width: 110, cellStyle: () => MONO_STYLE },
-  { field: "type", headerName: "Type", width: 80 },
-  {
-    field: "qty",
-    headerName: "Qty",
-    width: 120,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null ? formatNumber(params.value) : "",
-  },
-  {
-    field: "limit",
-    headerName: "Limit",
-    width: 85,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null && params.value > 0 ? params.value.toFixed(2) : "MKT",
-  },
-  {
-    field: "status",
-    headerName: "Status",
-    width: 100,
-    cellStyle: (params) => ({
-      color: params.value === "Filled" ? "hsl(158, 68%, 44%)" : params.value === "Working" ? "#EAB308" : params.value === "Partial" ? "#F97316" : params.value === "Cancelled" ? "hsl(350, 89%, 60%)" : "",
-      fontWeight: 600,
-    }),
-  },
-  { field: "time", headerName: "Time", width: 100, cellStyle: () => MONO_STYLE },
-];
-
-// ---------------------------------------------------------------------------
-// Column Definitions: Risk
-// ---------------------------------------------------------------------------
-
-const riskColDefs: ColDef<Risk>[] = [
-  { field: "cusip", headerName: "CUSIP", width: 110, cellStyle: () => MONO_STYLE },
-  { field: "issuer", headerName: "Issuer", width: 160 },
-  {
-    field: "dv01",
-    headerName: "DV01",
-    width: 100,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null ? "$" + formatNumber(params.value) : "",
-  },
-  {
-    field: "cr01",
-    headerName: "CR01",
-    width: 100,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null ? "$" + formatNumber(params.value) : "",
-  },
-  {
-    field: "spreadDuration",
-    headerName: "Sprd Dur",
-    width: 95,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null ? params.value.toFixed(1) : "",
-  },
-  {
-    field: "cs01",
-    headerName: "CS01",
-    width: 100,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null ? "$" + formatNumber(params.value) : "",
-  },
-  {
-    field: "var",
-    headerName: "VaR",
-    width: 110,
-    cellStyle: () => ({ ...MONO_STYLE, textAlign: "right" }),
-    valueFormatter: (params) => params.value != null ? "$" + formatNumber(params.value) : "",
-  },
-];
-
-// ---------------------------------------------------------------------------
-// Default Column Definition
-// ---------------------------------------------------------------------------
-
-const defaultColDef: ColDef = {
-  sortable: true,
-  filter: true,
-  resizable: true,
-};
-
-// ---------------------------------------------------------------------------
-// Component: Portfolio Summary Strip
-// ---------------------------------------------------------------------------
-
-function PortfolioSummary() {
-  return (
-    <div className="grid grid-cols-4 gap-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Total Notional
-          </CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold" style={MONO_STYLE}>$139.50M</div>
-          <p className="text-xs text-muted-foreground">12 positions</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Market Value
-          </CardTitle>
-          <TrendingUp className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold" style={MONO_STYLE}>$137.54M</div>
-          <p className="text-xs text-muted-foreground">Mark-to-market</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Total P&amp;L
-          </CardTitle>
-          <TrendingDown className="h-4 w-4" style={{ color: "hsl(350, 89%, 60%)" }} />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold" style={{ ...MONO_STYLE, color: "hsl(350, 89%, 60%)" }}>
-            -$1.65M
-          </div>
-          <p className="text-xs text-muted-foreground">-1.18% unrealized</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Portfolio Risk (DV01)
-          </CardTitle>
-          <Shield className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold" style={MONO_STYLE}>$181,327</div>
-          <p className="text-xs text-muted-foreground">Dollar value of 1bp</p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Component: Sector Allocation Bar
-// ---------------------------------------------------------------------------
-
-function SectorAllocationBar() {
-  return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">Sector Allocation</CardTitle>
-        <BarChart3 className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="flex h-4 w-full overflow-hidden rounded-full">
-          {sectorAllocation.map((s) => (
-            <div
-              key={s.sector}
-              style={{ width: `${s.pct}%`, backgroundColor: s.color }}
-              className="h-full transition-all"
-              title={`${s.sector}: ${s.pct}%`}
-            />
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-x-4 gap-y-1">
-          {sectorAllocation.map((s) => (
-            <div key={s.sector} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span
-                className="inline-block h-2.5 w-2.5 rounded-full"
-                style={{ backgroundColor: s.color }}
-              />
-              {s.sector} {s.pct}%
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Component: Bond Detail Panel
+// Component: Bond Detail Panel (grouped metrics, polished)
 // ---------------------------------------------------------------------------
 
 function BondDetailPanel({
@@ -1026,108 +1056,109 @@ function BondDetailPanel({
   onTrade: () => void;
   onPriceClick: (price: number, side: "BUY" | "SELL") => void;
 }) {
-  const pnlColor = position.pnl >= 0 ? "hsl(158, 68%, 44%)" : "hsl(350, 89%, 60%)";
+  const pnlColor = position.pnl >= 0 ? CLR_SUCCESS : CLR_DANGER;
+  const pnlBg = position.pnl >= 0 ? "hsl(var(--mdl-success) / 0.08)" : "hsl(var(--mdl-destructive) / 0.08)";
+
+  const sectionHeader = (title: string) => (
+    <div className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground font-semibold mt-3 mb-1.5 first:mt-0">
+      {title}
+    </div>
+  );
+
+  const metric = (label: string, value: string, mono = true) => (
+    <div>
+      <p className="text-[10px] text-muted-foreground">{label}</p>
+      <p className="text-xs font-medium" style={mono ? MONO : undefined}>{value}</p>
+    </div>
+  );
 
   return (
     <Card className="h-full flex flex-col">
-      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
-        <div>
-          <CardTitle className="text-base">{position.issuer}</CardTitle>
-          <p className="text-sm text-muted-foreground" style={MONO_STYLE}>
+      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2 pt-3 px-3">
+        <div className="min-w-0">
+          <CardTitle className="text-sm font-semibold truncate">{position.issuer}</CardTitle>
+          <p className="text-[11px] text-muted-foreground font-mono" style={TABNUM}>
             {position.description}
           </p>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           <Button
             variant="outline"
             size="sm"
-            className="h-7 text-xs"
+            className="h-6 text-[10px] px-2"
             onClick={onTrade}
           >
             Trade
           </Button>
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-7 w-7">
-            <X className="h-4 w-4" />
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6">
+            <X className="h-3 w-3" />
           </Button>
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden p-0">
         <Tabs defaultValue="details" className="flex flex-col h-full">
-          <TabsList className="mx-4 mb-0 w-fit">
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="ladder">Ladder</TabsTrigger>
+          <TabsList className="mx-3 mb-0 w-fit h-7">
+            <TabsTrigger value="details" className="text-[11px] h-6 px-2.5">Details</TabsTrigger>
+            <TabsTrigger value="ladder" className="text-[11px] h-6 px-2.5">Ladder</TabsTrigger>
           </TabsList>
-          <TabsContent value="details" className="flex-1 overflow-auto px-4 pb-4 mt-3">
-            <div className="space-y-4">
+          <TabsContent value="details" className="flex-1 overflow-auto px-3 pb-3 mt-2">
+            {/* P&L display — prominent with subtle background bar */}
+            <div
+              className="rounded-md px-3 py-2 mb-3"
+              style={{ background: pnlBg }}
+            >
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">Unrealized P&amp;L</p>
+              <p className="text-xl font-bold font-mono" style={{ ...TABNUM, color: pnlColor }}>
+                {formatPnl(position.pnl)}
+              </p>
+            </div>
+
+            {/* Identity */}
+            {sectionHeader("Identity")}
+            <div className="grid grid-cols-3 gap-y-2 gap-x-2 text-xs">
+              {metric("CUSIP", position.cusip)}
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Unrealized P&amp;L</p>
-                <p className="text-2xl font-bold" style={{ ...MONO_STYLE, color: pnlColor }}>
-                  {formatPnl(position.pnl)}
+                <p className="text-[10px] text-muted-foreground">Rating</p>
+                <p className="text-xs font-semibold" style={{ color: getRatingColor(position.rating) }}>
+                  {position.rating}
                 </p>
               </div>
-              <Separator />
-              <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
-                <div>
-                  <p className="text-xs text-muted-foreground">CUSIP</p>
-                  <p className="font-medium" style={MONO_STYLE}>{position.cusip}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Side</p>
-                  <Badge variant={position.side === "LONG" ? "default" : "destructive"} className="text-xs">
-                    {position.side}
-                  </Badge>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Coupon</p>
-                  <p className="font-medium" style={MONO_STYLE}>{position.coupon.toFixed(3)}%</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Maturity</p>
-                  <p className="font-medium" style={MONO_STYLE}>{position.maturity}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Rating</p>
-                  <p className="font-medium" style={{ color: getRatingColor(position.rating) }}>
-                    {position.rating}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Sector</p>
-                  <p className="font-medium">{position.sector}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Notional</p>
-                  <p className="font-medium" style={MONO_STYLE}>{formatCurrency(position.notional)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Price</p>
-                  <p className="font-medium" style={MONO_STYLE}>{position.price.toFixed(2)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Mkt Value</p>
-                  <p className="font-medium" style={MONO_STYLE}>{formatCurrency(position.mktValue)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Yield</p>
-                  <p className="font-medium" style={MONO_STYLE}>{position.yield.toFixed(2)}%</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">Duration</p>
-                  <p className="font-medium" style={MONO_STYLE}>{position.duration.toFixed(1)}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">DV01</p>
-                  <p className="font-medium" style={MONO_STYLE}>${formatNumber(position.dv01)}</p>
-                </div>
+              {metric("Sector", position.sector, false)}
+            </div>
+
+            {/* Pricing */}
+            {sectionHeader("Pricing")}
+            <div className="grid grid-cols-3 gap-y-2 gap-x-2 text-xs">
+              {metric("Price", position.price.toFixed(2))}
+              {metric("Yield", position.yield.toFixed(2) + "%")}
+              {metric("Coupon", position.coupon.toFixed(3) + "%")}
+            </div>
+
+            {/* Risk */}
+            {sectionHeader("Risk")}
+            <div className="grid grid-cols-3 gap-y-2 gap-x-2 text-xs">
+              {metric("Duration", position.duration.toFixed(1))}
+              {metric("DV01", "$" + formatNumber(position.dv01))}
+              {metric("Notional", formatCurrency(position.notional))}
+            </div>
+
+            {/* Side + Maturity */}
+            {sectionHeader("Position")}
+            <div className="grid grid-cols-3 gap-y-2 gap-x-2 text-xs">
+              <div>
+                <p className="text-[10px] text-muted-foreground">Side</p>
+                <Badge variant={position.side === "LONG" ? "default" : "destructive"} className="text-[10px] h-4 px-1.5">
+                  {position.side}
+                </Badge>
               </div>
+              {metric("Maturity", position.maturity)}
+              {metric("Mkt Value", formatCurrency(position.mktValue))}
             </div>
           </TabsContent>
           <TabsContent value="ladder" className="flex-1 overflow-hidden mt-0">
             <PriceLadder
               position={position}
               onPriceClick={onPriceClick}
-              onBuy={() => onPriceClick(position.price, "BUY")}
-              onSell={() => onPriceClick(position.price, "SELL")}
             />
           </TabsContent>
         </Tabs>
@@ -1156,21 +1187,40 @@ export default function Trading() {
   };
 
   return (
-    <div className="space-y-4">
-      {/* Page Header */}
+    <div className="space-y-3">
+      {/* Page Header — clean toolbar row */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Fixed Income Trading</h2>
-          <p className="text-muted-foreground">Credit desk positions &amp; risk management</p>
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold tracking-tight">Fixed Income Trading</h2>
+          {/* Live status pill */}
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-2 py-0.5">
+            <span
+              className="h-1.5 w-1.5 rounded-full"
+              style={{
+                background: CLR_SUCCESS,
+                boxShadow: `0 0 4px ${CLR_SUCCESS}`,
+                animation: "pulse 2s ease-in-out infinite",
+              }}
+            />
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Live</span>
+          </span>
+          <span className="text-[10px] text-muted-foreground font-mono" style={TABNUM}>
+            As of 15:42:31 ET
+          </span>
         </div>
         <Button
+          variant="outline"
+          size="sm"
+          className="h-7 text-xs gap-1"
           onClick={() => openOrderTicket()}
-          className="bg-[hsl(var(--mdl-accent))] text-white hover:bg-[hsl(var(--mdl-accent))]/90"
         >
-          <Plus className="h-4 w-4 mr-2" />
-          New Order
+          <Plus className="h-3 w-3" />
+          Order
         </Button>
       </div>
+
+      {/* Pulse animation keyframe */}
+      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
 
       {/* Order Ticket Dialog */}
       <OrderTicketDialog
@@ -1187,10 +1237,12 @@ export default function Trading() {
       <SectorAllocationBar />
 
       {/* Positions Blotter + Detail Panel */}
-      <div className={`grid gap-4 ${selectedPosition ? "grid-cols-[1fr_340px]" : "grid-cols-1"}`}>
+      <div className={`grid gap-3 ${selectedPosition ? "grid-cols-[1fr_340px]" : "grid-cols-1"}`}>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Positions Blotter</CardTitle>
+            <CardTitle className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              Positions Blotter
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div style={{ height: 400 }}>
@@ -1200,7 +1252,7 @@ export default function Trading() {
                 columnDefs={positionColDefs}
                 defaultColDef={defaultColDef}
                 rowHeight={28}
-                headerHeight={32}
+                headerHeight={30}
                 animateRows={true}
                 rowSelection="single"
                 onRowClicked={(event) => {
@@ -1235,11 +1287,31 @@ export default function Trading() {
 
       {/* Bottom Tabs: Trades / RFQs / Orders / Risk */}
       <Tabs defaultValue="trades">
-        <TabsList>
-          <TabsTrigger value="trades">Trades</TabsTrigger>
-          <TabsTrigger value="rfqs">RFQs</TabsTrigger>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
-          <TabsTrigger value="risk">Risk</TabsTrigger>
+        <TabsList className="h-8">
+          <TabsTrigger value="trades" className="text-xs h-6 px-2.5 gap-1">
+            Trades
+            <span className="text-[10px] font-mono rounded-full bg-muted px-1.5 py-px" style={TABNUM}>
+              {trades.length}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="rfqs" className="text-xs h-6 px-2.5 gap-1">
+            RFQs
+            <span className="text-[10px] font-mono rounded-full bg-muted px-1.5 py-px" style={TABNUM}>
+              {rfqs.length}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="orders" className="text-xs h-6 px-2.5 gap-1">
+            Orders
+            <span className="text-[10px] font-mono rounded-full bg-muted px-1.5 py-px" style={TABNUM}>
+              {orders.length}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="risk" className="text-xs h-6 px-2.5 gap-1">
+            Risk
+            <span className="text-[10px] font-mono rounded-full bg-muted px-1.5 py-px" style={TABNUM}>
+              {riskData.length}
+            </span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="trades">
@@ -1252,7 +1324,7 @@ export default function Trading() {
                   columnDefs={tradeColDefs}
                   defaultColDef={defaultColDef}
                   rowHeight={28}
-                  headerHeight={32}
+                  headerHeight={30}
                   animateRows={true}
                 />
               </div>
@@ -1270,7 +1342,7 @@ export default function Trading() {
                   columnDefs={rfqColDefs}
                   defaultColDef={defaultColDef}
                   rowHeight={28}
-                  headerHeight={32}
+                  headerHeight={30}
                   animateRows={true}
                 />
               </div>
@@ -1288,7 +1360,7 @@ export default function Trading() {
                   columnDefs={orderColDefs}
                   defaultColDef={defaultColDef}
                   rowHeight={28}
-                  headerHeight={32}
+                  headerHeight={30}
                   animateRows={true}
                 />
               </div>
@@ -1306,7 +1378,7 @@ export default function Trading() {
                   columnDefs={riskColDefs}
                   defaultColDef={defaultColDef}
                   rowHeight={28}
-                  headerHeight={32}
+                  headerHeight={30}
                   animateRows={true}
                 />
               </div>
