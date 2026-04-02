@@ -107,38 +107,39 @@
 }
 
 /* ─── Dark Theme ───────────────────────────────────────────────────── */
-/* True black background, warm dark gray surfaces, teal accent.
-   Teal is brighter in dark mode for contrast against dark surfaces. */
+/* thinkorswim / Schwab-inspired dark palette.
+   Very dark neutral backgrounds, warm grays, teal brand accent.
+   Trading green (#26A69A) and pink-red (#EF5350) for buy/sell signals. */
 .dark,
 [data-theme="dark"] {
-  --mdl-background: 225 18% 4%;           /* #0B0E11 — true black */
-  --mdl-foreground: 220 13% 93%;          /* #EAECEF — primary text */
-  --mdl-card: 224 14% 11%;                /* #1E2026 — card surface */
-  --mdl-card-foreground: 220 13% 93%;
-  --mdl-popover: 224 14% 11%;
-  --mdl-popover-foreground: 220 13% 93%;
-  --mdl-primary: 174 72% 46%;             /* #21B8A4 — teal, brighter for dark bg */
-  --mdl-primary-foreground: 225 18% 5%;   /* Near-black text on teal */
-  --mdl-secondary: 223 11% 18%;           /* #2B2F36 — elevated surface */
-  --mdl-secondary-foreground: 220 13% 93%;
-  --mdl-muted: 223 11% 18%;
-  --mdl-muted-foreground: 218 11% 55%;    /* #848E9C */
-  --mdl-accent: 223 11% 18%;              /* Neutral hover state */
-  --mdl-accent-foreground: 220 13% 93%;
-  --mdl-brand: 174 72% 46%;              /* Teal brand — slightly brighter in dark */
-  --mdl-brand-foreground: 225 18% 5%;
-  --mdl-destructive: 350 89% 60%;         /* #F6465D */
+  --mdl-background: 0 0% 7%;              /* #121212 — very dark */
+  --mdl-foreground: 0 0% 100%;            /* #FFFFFF — white text */
+  --mdl-card: 0 0% 12%;                   /* #1E1E1E — card surface */
+  --mdl-card-foreground: 0 0% 100%;
+  --mdl-popover: 0 0% 12%;
+  --mdl-popover-foreground: 0 0% 100%;
+  --mdl-primary: 174 72% 46%;             /* #21B8A4 — teal brand accent */
+  --mdl-primary-foreground: 0 0% 5%;      /* Near-black text on teal */
+  --mdl-secondary: 0 0% 15%;              /* #252525 — elevated surface */
+  --mdl-secondary-foreground: 0 0% 100%;
+  --mdl-muted: 0 0% 15%;
+  --mdl-muted-foreground: 0 0% 62%;       /* #9E9E9E */
+  --mdl-accent: 0 0% 15%;                 /* Neutral hover state */
+  --mdl-accent-foreground: 0 0% 100%;
+  --mdl-brand: 174 72% 46%;              /* Teal brand */
+  --mdl-brand-foreground: 0 0% 5%;
+  --mdl-destructive: 4 82% 63%;           /* #EF5350 — thinkorswim red */
   --mdl-destructive-foreground: 0 0% 100%;
-  --mdl-success: 158 68% 44%;             /* #0ECB81 */
-  --mdl-border: 223 11% 18%;              /* #2B2F36 — subtle border */
-  --mdl-input: 222 10% 25%;               /* #3B4046 — input bg */
+  --mdl-success: 160 55% 40%;             /* #26A69A — thinkorswim green */
+  --mdl-border: 0 0% 18%;                 /* #2E2E2E — subtle border */
+  --mdl-input: 0 0% 15%;                  /* #252525 — input bg */
   --mdl-ring: 174 72% 46%;               /* Focus ring = teal */
 
-  /* Trading tokens (dark) — Binance's specific hues */
+  /* Trading tokens (dark) — thinkorswim palette */
   --mdl-bid: 210 100% 55%;               /* Blue bid */
-  --mdl-ask: 350 89% 63%;                /* #F6465D lighter for dark bg */
-  --mdl-flash-up: 158 68% 44%;           /* #0ECB81 — Binance green */
-  --mdl-flash-down: 350 89% 63%;         /* #F6465D — Binance red */
-  --mdl-pnl-positive: 158 68% 44%;       /* Green profit */
-  --mdl-pnl-negative: 350 89% 63%;       /* Red loss */
+  --mdl-ask: 4 82% 63%;                  /* #EF5350 — thinkorswim red */
+  --mdl-flash-up: 160 55% 40%;           /* #26A69A — thinkorswim green */
+  --mdl-flash-down: 4 82% 63%;           /* #EF5350 — thinkorswim red */
+  --mdl-pnl-positive: 160 55% 40%;       /* #26A69A — trading green */
+  --mdl-pnl-negative: 4 82% 63%;         /* #EF5350 — trading red */
 }

@@ -6,6 +6,8 @@ import {
   Shield,
   X,
   Plus,
+  Minus,
+  ChevronDown,
 } from "lucide-react";
 import {
   Card,
@@ -622,16 +624,19 @@ function OrderTicketDialog({
   const [side, setSide] = useState<"BUY" | "SELL">(prefill?.side ?? "BUY");
   const [cusip, setCusip] = useState(prefill?.cusip ?? "");
   const [orderType, setOrderType] = useState<"Limit" | "Market" | "Stop">("Limit");
-  const [quantity, setQuantity] = useState("");
+  const [quantity, setQuantity] = useState("5");
   const [limitPrice, setLimitPrice] = useState(prefill?.limitPrice?.toFixed(3) ?? "");
   const [tif, setTif] = useState("DAY");
-  const [account, setAccount] = useState("CREDIT-MAIN");
 
   const resolvedIssuer = useMemo(() => {
     if (prefill?.issuer) return prefill.issuer;
     const pos = positions.find((p) => p.cusip === cusip);
     return pos?.issuer ?? "";
   }, [cusip, prefill?.issuer]);
+
+  const resolvedPosition = useMemo(() => {
+    return positions.find((p) => p.cusip === cusip) ?? null;
+  }, [cusip]);
 
   const prefillKey = `${prefill?.cusip}-${prefill?.side}-${prefill?.limitPrice}`;
   const [lastPrefillKey, setLastPrefillKey] = useState(prefillKey);
@@ -643,9 +648,11 @@ function OrderTicketDialog({
     setOrderType(prefill?.limitPrice ? "Limit" : "Limit");
   }
 
+  const qtyNum = parseFloat(quantity) || 0;
+  const limNum = parseFloat(limitPrice) || 0;
+  const estimatedCost = qtyNum * limNum * 10_000; // qty in $M * price = notional
+
   const handleSubmit = () => {
-    const qty = parseFloat(quantity) || 0;
-    const lim = parseFloat(limitPrice) || 0;
     const now = new Date();
     const timeStr = [now.getHours(), now.getMinutes(), now.getSeconds()]
       .map((n) => String(n).padStart(2, "0"))
@@ -655,8 +662,8 @@ function OrderTicketDialog({
       side,
       cusip,
       type: orderType,
-      qty: qty * 1_000_000,
-      limit: orderType === "Market" ? 0 : lim,
+      qty: qtyNum * 1_000_000,
+      limit: orderType === "Market" ? 0 : limNum,
       status: "Working",
       time: timeStr,
     };
@@ -665,29 +672,38 @@ function OrderTicketDialog({
   };
 
   const selectClass =
-    "flex h-8 w-full rounded-md border border-input bg-transparent px-2 py-1 text-xs shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring";
+    "flex h-8 w-full rounded-md border border-border bg-secondary px-2 py-1 text-xs shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring appearance-none cursor-pointer";
 
-  const topBorderColor = side === "BUY" ? CLR_SUCCESS : CLR_DANGER;
+  const isBuy = side === "BUY";
+  const sideColor = isBuy ? CLR_SUCCESS : CLR_DANGER;
+  const ticker = resolvedIssuer ? resolvedIssuer.split(" ")[0].toUpperCase() : "---";
+
+  // Simulated bid/ask from position price
+  const bidPrice = resolvedPosition ? (resolvedPosition.price - 0.125).toFixed(2) : "--";
+  const askPrice = resolvedPosition ? (resolvedPosition.price + 0.125).toFixed(2) : "--";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[380px] p-0 gap-0 overflow-hidden">
-        {/* Colored top accent bar */}
-        <div className="h-0.5" style={{ background: topBorderColor }} />
+      <DialogContent className="max-w-[360px] p-0 gap-0 overflow-hidden">
+        {/* Bond identifier header */}
+        <div className="px-4 pt-4 pb-3">
+          <div className="flex items-baseline gap-2">
+            <span className="text-base font-bold">{ticker}</span>
+            <span className="text-base font-mono" style={TABNUM}>
+              ${resolvedPosition?.price.toFixed(2) ?? "---"}
+            </span>
+          </div>
+        </div>
 
-        <DialogHeader className="px-4 pt-3 pb-2">
-          <DialogTitle className="text-sm font-semibold">New Order</DialogTitle>
-        </DialogHeader>
-
-        <div className="px-4 pb-3 space-y-3">
-          {/* Side toggle — connected pills */}
-          <div className="flex rounded-md overflow-hidden border border-border h-7">
+        {/* Buy / Sell toggle — connected pills */}
+        <div className="px-4 pb-3">
+          <div className="flex rounded-lg overflow-hidden h-8">
             <button
               type="button"
-              className="flex-1 text-xs font-semibold transition-colors"
+              className="flex-1 text-xs font-bold transition-colors rounded-l-lg"
               style={{
-                background: side === "BUY" ? CLR_SUCCESS : "transparent",
-                color: side === "BUY" ? "#fff" : "hsl(var(--muted-foreground))",
+                background: isBuy ? CLR_SUCCESS : "hsl(var(--mdl-secondary))",
+                color: isBuy ? "#fff" : "hsl(var(--muted-foreground))",
               }}
               onClick={() => setSide("BUY")}
             >
@@ -695,40 +711,27 @@ function OrderTicketDialog({
             </button>
             <button
               type="button"
-              className="flex-1 text-xs font-semibold transition-colors border-l border-border"
+              className="flex-1 text-xs font-bold transition-colors rounded-r-lg"
               style={{
-                background: side === "SELL" ? CLR_DANGER : "transparent",
-                color: side === "SELL" ? "#fff" : "hsl(var(--muted-foreground))",
+                background: !isBuy ? CLR_DANGER : "hsl(var(--mdl-secondary))",
+                color: !isBuy ? "#fff" : "hsl(var(--muted-foreground))",
               }}
               onClick={() => setSide("SELL")}
             >
               Sell
             </button>
           </div>
+        </div>
 
-          {/* Row 1: CUSIP + Issuer */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">CUSIP</Label>
-              <Input
-                value={cusip}
-                onChange={(e) => setCusip(e.target.value)}
-                placeholder="037833AK6"
-                className="h-8 text-xs font-mono"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Issuer</Label>
-              <div className="h-8 flex items-center px-2 rounded-md bg-muted text-xs font-medium truncate">
-                {resolvedIssuer || "\u2014"}
-              </div>
-            </div>
-          </div>
+        {/* Separator */}
+        <div className="border-t border-border" />
 
-          {/* Row 2: Type + TIF */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Type</Label>
+        {/* Form rows — label left, control right */}
+        <div className="px-4 py-3 space-y-3">
+          {/* Order type */}
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Order type</Label>
+            <div className="relative w-[55%]">
               <select
                 value={orderType}
                 onChange={(e) => setOrderType(e.target.value as "Limit" | "Market" | "Stop")}
@@ -738,74 +741,115 @@ function OrderTicketDialog({
                 <option value="Market">Market</option>
                 <option value="Stop">Stop</option>
               </select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">TIF</Label>
-              <select value={tif} onChange={(e) => setTif(e.target.value)} className={selectClass}>
-                <option value="DAY">Day</option>
-                <option value="GTC">GTC</option>
-                <option value="IOC">IOC</option>
-                <option value="FOK">FOK</option>
-              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
             </div>
           </div>
 
-          {/* Row 3: Qty + Limit */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Qty ($M)</Label>
+          {/* Quantity with stepper */}
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Quantity ($M)</Label>
+            <div className="flex items-center w-[55%] gap-1">
+              <button
+                type="button"
+                className="flex items-center justify-center h-8 w-8 rounded-md border border-border bg-secondary hover:bg-accent transition-colors shrink-0"
+                onClick={() => setQuantity(String(Math.max(1, qtyNum - 1)))}
+              >
+                <Minus className="h-3 w-3 text-muted-foreground" />
+              </button>
               <Input
                 type="number"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
-                placeholder="5"
-                className="h-8 text-xs font-mono"
+                className="h-8 text-xs font-mono text-center bg-secondary border-border flex-1"
               />
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                {orderType === "Market" ? "Price" : "Limit"}
-              </Label>
-              {orderType === "Market" ? (
-                <div className="h-8 flex items-center px-2 rounded-md bg-muted text-xs font-mono text-muted-foreground">
-                  MKT
-                </div>
-              ) : (
-                <Input
-                  type="number"
-                  step="0.001"
-                  value={limitPrice}
-                  onChange={(e) => setLimitPrice(e.target.value)}
-                  placeholder="98.250"
-                  className="h-8 text-xs font-mono"
-                />
-              )}
+              <button
+                type="button"
+                className="flex items-center justify-center h-8 w-8 rounded-md border border-border bg-secondary hover:bg-accent transition-colors shrink-0"
+                onClick={() => setQuantity(String(qtyNum + 1))}
+              >
+                <Plus className="h-3 w-3 text-muted-foreground" />
+              </button>
             </div>
           </div>
 
-          {/* Account */}
-          <div className="space-y-1">
-            <Label className="text-[10px] uppercase tracking-widest text-muted-foreground">Account</Label>
-            <select value={account} onChange={(e) => setAccount(e.target.value)} className={selectClass}>
-              <option value="CREDIT-MAIN">CREDIT-MAIN</option>
-              <option value="CREDIT-PROP">CREDIT-PROP</option>
-              <option value="RATES-HEDGE">RATES-HEDGE</option>
-            </select>
+          {/* Limit price */}
+          <div>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs text-muted-foreground">
+                {orderType === "Market" ? "Price" : "Limit price"}
+              </Label>
+              <div className="w-[55%]">
+                {orderType === "Market" ? (
+                  <div className="h-8 flex items-center px-2 rounded-md bg-secondary text-xs font-mono text-muted-foreground border border-border">
+                    MKT
+                  </div>
+                ) : (
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={limitPrice}
+                    onChange={(e) => setLimitPrice(e.target.value)}
+                    placeholder="98.250"
+                    className="h-8 text-xs font-mono bg-secondary border-border"
+                  />
+                )}
+              </div>
+            </div>
+            {orderType !== "Market" && resolvedPosition && (
+              <p className="text-[10px] text-muted-foreground mt-1 text-right">
+                Bid ${bidPrice} &bull; Ask ${askPrice}
+              </p>
+            )}
+          </div>
+
+          {/* Time in force */}
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Time in force</Label>
+            <div className="relative w-[55%]">
+              <select value={tif} onChange={(e) => setTif(e.target.value)} className={selectClass}>
+                <option value="DAY">Good for day</option>
+                <option value="GTC">Good til cancelled</option>
+                <option value="IOC">Immediate or cancel</option>
+                <option value="FOK">Fill or kill</option>
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground pointer-events-none" />
+            </div>
           </div>
         </div>
 
-        <DialogFooter className="px-4 pb-3 pt-0">
+        {/* Separator */}
+        <div className="border-t border-border" />
+
+        {/* Estimated cost section */}
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold">Estimated cost</span>
+            <span className="text-sm font-bold font-mono" style={TABNUM}>
+              {orderType === "Market"
+                ? "Market"
+                : limNum > 0
+                  ? formatCurrency(estimatedCost)
+                  : "--"}
+            </span>
+          </div>
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            Buying power {formatCurrency(25_000_000)}
+          </p>
+        </div>
+
+        {/* Footer: Cancel + Submit */}
+        <DialogFooter className="px-4 pb-4 pt-0">
           <div className="flex gap-2 justify-end w-full">
-            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => onOpenChange(false)}>
+            <Button variant="ghost" size="sm" className="h-8 text-xs px-4" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button
               size="sm"
-              className="h-7 text-xs"
-              style={{ background: topBorderColor, color: "#fff" }}
+              className="h-8 text-xs px-5 font-semibold"
+              style={{ background: sideColor, color: "#fff" }}
               onClick={handleSubmit}
             >
-              Submit
+              {isBuy ? "Buy" : "Sell"} {ticker}
             </Button>
           </div>
         </DialogFooter>
