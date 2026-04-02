@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -38,6 +38,13 @@ import {
   type ColDef,
 } from "ag-grid-community";
 import { marketsGridTheme } from "@marketsui/tokens/ag-grid-theme";
+import {
+  DockviewReact,
+  type DockviewReadyEvent,
+  type IDockviewPanelProps,
+  type DockviewApi,
+} from "dockview";
+import "dockview/dist/styles/dockview.css";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -1073,7 +1080,7 @@ function BondDetailPanel({
   );
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="h-full flex flex-col border-0 rounded-none">
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2 pt-3 px-3">
         <div className="min-w-0">
           <CardTitle className="text-sm font-semibold truncate">{position.issuer}</CardTitle>
@@ -1168,7 +1175,166 @@ function BondDetailPanel({
 }
 
 // ---------------------------------------------------------------------------
-// Component: Trading Page
+// Dockview Panel Components
+// ---------------------------------------------------------------------------
+
+// Suppress unused-variable lint — these are used inside the panel props generics
+void CLR_SUCCESS_BG;
+void CLR_DANGER_BG;
+
+/** Summary panel: PortfolioSummary + SectorAllocationBar */
+function SummaryPanel(_props: IDockviewPanelProps) {
+  return (
+    <div className="p-2 space-y-2 overflow-auto h-full bg-background">
+      <PortfolioSummary />
+      <SectorAllocationBar />
+    </div>
+  );
+}
+
+/** Positions blotter panel */
+function PositionsPanel(
+  props: IDockviewPanelProps<{ onRowClick: (pos: Position) => void }>
+) {
+  const { onRowClick } = props.params;
+  return (
+    <div className="h-full w-full bg-background">
+      <AgGridReact<Position>
+        theme={marketsGridTheme}
+        rowData={positions}
+        columnDefs={positionColDefs}
+        defaultColDef={defaultColDef}
+        rowHeight={28}
+        headerHeight={30}
+        animateRows={true}
+        rowSelection="single"
+        onRowClicked={(event) => {
+          if (event.data) onRowClick(event.data);
+        }}
+      />
+    </div>
+  );
+}
+
+/** Activity panel: Trades / RFQs / Orders / Risk tabs */
+function ActivityPanel(
+  props: IDockviewPanelProps<{ orders: Order[] }>
+) {
+  const { orders: ordersData } = props.params;
+  return (
+    <div className="h-full w-full bg-background overflow-hidden flex flex-col">
+      <Tabs defaultValue="trades" className="flex flex-col h-full">
+        <TabsList className="h-8 mx-2 mt-1 w-fit shrink-0">
+          <TabsTrigger value="trades" className="text-xs h-6 px-2.5 gap-1">
+            Trades
+            <span className="text-[10px] font-mono rounded-full bg-muted px-1.5 py-px" style={TABNUM}>
+              {trades.length}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="rfqs" className="text-xs h-6 px-2.5 gap-1">
+            RFQs
+            <span className="text-[10px] font-mono rounded-full bg-muted px-1.5 py-px" style={TABNUM}>
+              {rfqs.length}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="orders" className="text-xs h-6 px-2.5 gap-1">
+            Orders
+            <span className="text-[10px] font-mono rounded-full bg-muted px-1.5 py-px" style={TABNUM}>
+              {ordersData.length}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="risk" className="text-xs h-6 px-2.5 gap-1">
+            Risk
+            <span className="text-[10px] font-mono rounded-full bg-muted px-1.5 py-px" style={TABNUM}>
+              {riskData.length}
+            </span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="trades" className="flex-1 mt-0 overflow-hidden">
+          <div className="h-full w-full">
+            <AgGridReact<Trade>
+              theme={marketsGridTheme}
+              rowData={trades}
+              columnDefs={tradeColDefs}
+              defaultColDef={defaultColDef}
+              rowHeight={28}
+              headerHeight={30}
+              animateRows={true}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="rfqs" className="flex-1 mt-0 overflow-hidden">
+          <div className="h-full w-full">
+            <AgGridReact<RFQ>
+              theme={marketsGridTheme}
+              rowData={rfqs}
+              columnDefs={rfqColDefs}
+              defaultColDef={defaultColDef}
+              rowHeight={28}
+              headerHeight={30}
+              animateRows={true}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="orders" className="flex-1 mt-0 overflow-hidden">
+          <div className="h-full w-full">
+            <AgGridReact<Order>
+              theme={marketsGridTheme}
+              rowData={ordersData}
+              columnDefs={orderColDefs}
+              defaultColDef={defaultColDef}
+              rowHeight={28}
+              headerHeight={30}
+              animateRows={true}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="risk" className="flex-1 mt-0 overflow-hidden">
+          <div className="h-full w-full">
+            <AgGridReact<Risk>
+              theme={marketsGridTheme}
+              rowData={riskData}
+              columnDefs={riskColDefs}
+              defaultColDef={defaultColDef}
+              rowHeight={28}
+              headerHeight={30}
+              animateRows={true}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+/** Detail panel: BondDetailPanel (with Price Ladder tab inside) */
+function DetailPanel(
+  props: IDockviewPanelProps<{
+    position: Position;
+    onClose: () => void;
+    onTrade: () => void;
+    onPriceClick: (price: number, side: "BUY" | "SELL") => void;
+  }>
+) {
+  const { position, onClose, onTrade, onPriceClick } = props.params;
+  return (
+    <div className="h-full w-full overflow-hidden bg-background">
+      <BondDetailPanel
+        position={position}
+        onClose={onClose}
+        onTrade={onTrade}
+        onPriceClick={onPriceClick}
+      />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Component: Trading Page (Dockview layout)
 // ---------------------------------------------------------------------------
 
 export default function Trading() {
@@ -1176,20 +1342,142 @@ export default function Trading() {
   const [orderTicketOpen, setOrderTicketOpen] = useState(false);
   const [orderPrefill, setOrderPrefill] = useState<OrderPrefill>({});
   const [orders, setOrders] = useState<Order[]>(ORDERS);
+  const dockviewApiRef = useRef<DockviewApi | null>(null);
 
-  const openOrderTicket = (prefill?: OrderPrefill) => {
+  const openOrderTicket = useCallback((prefill?: OrderPrefill) => {
     setOrderPrefill(prefill ?? {});
     setOrderTicketOpen(true);
-  };
+  }, []);
 
-  const handleOrderSubmit = (order: Order) => {
+  const handleOrderSubmit = useCallback((order: Order) => {
     setOrders((prev) => [order, ...prev]);
-  };
+  }, []);
+
+  // Show or update the detail panel when a position is selected
+  const showDetailPanel = useCallback(
+    (pos: Position) => {
+      setSelectedPosition(pos);
+      const api = dockviewApiRef.current;
+      if (!api) return;
+
+      const existing = api.getPanel("detail");
+      if (existing) {
+        // Update params on the existing panel
+        existing.api.updateParameters({
+          position: pos,
+          onClose: () => {
+            setSelectedPosition(null);
+            const panel = dockviewApiRef.current?.getPanel("detail");
+            if (panel) dockviewApiRef.current?.removePanel(panel);
+          },
+          onTrade: () =>
+            openOrderTicket({
+              cusip: pos.cusip,
+              issuer: pos.issuer,
+            }),
+          onPriceClick: (price: number, side: "BUY" | "SELL") =>
+            openOrderTicket({
+              cusip: pos.cusip,
+              issuer: pos.issuer,
+              side,
+              limitPrice: price,
+            }),
+        });
+      } else {
+        // Add new detail panel to the right of positions
+        const posPanel = api.getPanel("positions");
+        api.addPanel({
+          id: "detail",
+          component: "detail",
+          title: `${pos.issuer} Detail`,
+          params: {
+            position: pos,
+            onClose: () => {
+              setSelectedPosition(null);
+              const panel = dockviewApiRef.current?.getPanel("detail");
+              if (panel) dockviewApiRef.current?.removePanel(panel);
+            },
+            onTrade: () =>
+              openOrderTicket({
+                cusip: pos.cusip,
+                issuer: pos.issuer,
+              }),
+            onPriceClick: (price: number, side: "BUY" | "SELL") =>
+              openOrderTicket({
+                cusip: pos.cusip,
+                issuer: pos.issuer,
+                side,
+                limitPrice: price,
+              }),
+          },
+          position: posPanel
+            ? { direction: "right" as const, referencePanel: posPanel }
+            : undefined,
+          initialWidth: 340,
+        });
+      }
+    },
+    [openOrderTicket]
+  );
+
+  const components = useMemo(
+    () => ({
+      summary: SummaryPanel,
+      positions: PositionsPanel,
+      activity: ActivityPanel,
+      detail: DetailPanel,
+    }),
+    []
+  );
+
+  const onReady = useCallback(
+    (event: DockviewReadyEvent) => {
+      const api = event.api;
+      dockviewApiRef.current = api;
+
+      // 1. Summary panel (top, full width)
+      const summaryPanel = api.addPanel({
+        id: "summary",
+        component: "summary",
+        title: "Portfolio Summary",
+        params: {},
+      });
+
+      // 2. Positions blotter (center, below summary)
+      const posPanel = api.addPanel({
+        id: "positions",
+        component: "positions",
+        title: "Positions Blotter",
+        params: {
+          onRowClick: (pos: Position) => showDetailPanel(pos),
+        },
+        position: { direction: "below" as const, referencePanel: summaryPanel },
+      });
+
+      // 3. Activity panel (bottom, below positions)
+      api.addPanel({
+        id: "activity",
+        component: "activity",
+        title: "Activity",
+        params: { orders },
+        position: { direction: "below" as const, referencePanel: posPanel },
+        initialHeight: 250,
+      });
+
+      // Set summary to a fixed-ish height
+      // The summary group will be at the top; resize it
+      const summaryGroup = summaryPanel.group;
+      if (summaryGroup) {
+        api.getGroup(summaryGroup.id)?.api.setSize({ height: 140 });
+      }
+    },
+    [orders, showDetailPanel]
+  );
 
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col" style={{ height: "calc(100vh - 56px)" }}>
       {/* Page Header — clean toolbar row */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-4 py-2 shrink-0 border-b bg-background">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold tracking-tight">Fixed Income Trading</h2>
           {/* Live status pill */}
@@ -1222,7 +1510,7 @@ export default function Trading() {
       {/* Pulse animation keyframe */}
       <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
 
-      {/* Order Ticket Dialog */}
+      {/* Order Ticket Dialog (modal overlay, not a dockview panel) */}
       <OrderTicketDialog
         open={orderTicketOpen}
         onOpenChange={setOrderTicketOpen}
@@ -1230,162 +1518,14 @@ export default function Trading() {
         onSubmit={handleOrderSubmit}
       />
 
-      {/* Portfolio Summary Strip */}
-      <PortfolioSummary />
-
-      {/* Sector Allocation */}
-      <SectorAllocationBar />
-
-      {/* Positions Blotter + Detail Panel */}
-      <div className={`grid gap-3 ${selectedPosition ? "grid-cols-[1fr_340px]" : "grid-cols-1"}`}>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Positions Blotter
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div style={{ height: 400 }}>
-              <AgGridReact<Position>
-                theme={marketsGridTheme}
-                rowData={positions}
-                columnDefs={positionColDefs}
-                defaultColDef={defaultColDef}
-                rowHeight={28}
-                headerHeight={30}
-                animateRows={true}
-                rowSelection="single"
-                onRowClicked={(event) => {
-                  if (event.data) setSelectedPosition(event.data);
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {selectedPosition && (
-          <BondDetailPanel
-            position={selectedPosition}
-            onClose={() => setSelectedPosition(null)}
-            onTrade={() =>
-              openOrderTicket({
-                cusip: selectedPosition.cusip,
-                issuer: selectedPosition.issuer,
-              })
-            }
-            onPriceClick={(price, side) =>
-              openOrderTicket({
-                cusip: selectedPosition.cusip,
-                issuer: selectedPosition.issuer,
-                side,
-                limitPrice: price,
-              })
-            }
-          />
-        )}
+      {/* Dockview container — fills remaining height */}
+      <div className="flex-1 min-h-0">
+        <DockviewReact
+          className="dockview-theme-abyss"
+          onReady={onReady}
+          components={components}
+        />
       </div>
-
-      {/* Bottom Tabs: Trades / RFQs / Orders / Risk */}
-      <Tabs defaultValue="trades">
-        <TabsList className="h-8">
-          <TabsTrigger value="trades" className="text-xs h-6 px-2.5 gap-1">
-            Trades
-            <span className="text-[10px] font-mono rounded-full bg-muted px-1.5 py-px" style={TABNUM}>
-              {trades.length}
-            </span>
-          </TabsTrigger>
-          <TabsTrigger value="rfqs" className="text-xs h-6 px-2.5 gap-1">
-            RFQs
-            <span className="text-[10px] font-mono rounded-full bg-muted px-1.5 py-px" style={TABNUM}>
-              {rfqs.length}
-            </span>
-          </TabsTrigger>
-          <TabsTrigger value="orders" className="text-xs h-6 px-2.5 gap-1">
-            Orders
-            <span className="text-[10px] font-mono rounded-full bg-muted px-1.5 py-px" style={TABNUM}>
-              {orders.length}
-            </span>
-          </TabsTrigger>
-          <TabsTrigger value="risk" className="text-xs h-6 px-2.5 gap-1">
-            Risk
-            <span className="text-[10px] font-mono rounded-full bg-muted px-1.5 py-px" style={TABNUM}>
-              {riskData.length}
-            </span>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="trades">
-          <Card>
-            <CardContent className="pt-4">
-              <div style={{ height: 300 }}>
-                <AgGridReact<Trade>
-                  theme={marketsGridTheme}
-                  rowData={trades}
-                  columnDefs={tradeColDefs}
-                  defaultColDef={defaultColDef}
-                  rowHeight={28}
-                  headerHeight={30}
-                  animateRows={true}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="rfqs">
-          <Card>
-            <CardContent className="pt-4">
-              <div style={{ height: 300 }}>
-                <AgGridReact<RFQ>
-                  theme={marketsGridTheme}
-                  rowData={rfqs}
-                  columnDefs={rfqColDefs}
-                  defaultColDef={defaultColDef}
-                  rowHeight={28}
-                  headerHeight={30}
-                  animateRows={true}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="orders">
-          <Card>
-            <CardContent className="pt-4">
-              <div style={{ height: 300 }}>
-                <AgGridReact<Order>
-                  theme={marketsGridTheme}
-                  rowData={orders}
-                  columnDefs={orderColDefs}
-                  defaultColDef={defaultColDef}
-                  rowHeight={28}
-                  headerHeight={30}
-                  animateRows={true}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="risk">
-          <Card>
-            <CardContent className="pt-4">
-              <div style={{ height: 300 }}>
-                <AgGridReact<Risk>
-                  theme={marketsGridTheme}
-                  rowData={riskData}
-                  columnDefs={riskColDefs}
-                  defaultColDef={defaultColDef}
-                  rowHeight={28}
-                  headerHeight={30}
-                  animateRows={true}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
     </div>
   );
 }

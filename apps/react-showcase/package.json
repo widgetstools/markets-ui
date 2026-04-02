@@ -38,7 +38,8 @@
     "react-day-picker": "^9.6.0",
     "react-dom": "19.0.0",
     "react-router-dom": "^6.30.3",
-    "tailwind-merge": "^3.0.2"
+    "tailwind-merge": "^3.0.2",
+    "dockview": "file:../../libs/dockview-5.2.0.tgz"
   },
   "devDependencies": {
     "@types/react": "^19.0.8",
