@@ -1,9 +1,10 @@
 import { useState, useCallback } from "react";
-import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
+import { BrowserRouter, Routes, Route, NavLink, useLocation } from "react-router-dom";
 import { Sun, Moon } from "lucide-react";
 import { Button } from "./components/ui/button";
 import Dashboard from "./pages/Dashboard";
 import DesignSystem from "./pages/DesignSystem";
+import Trading from "./pages/Trading";
 
 // ---------------------------------------------------------------------------
 // Header with Navigation
@@ -39,6 +40,9 @@ function Header() {
             <NavLink to="/design-system" className={linkClass}>
               Design System
             </NavLink>
+            <NavLink to="/trading" className={linkClass}>
+              Trading
+            </NavLink>
           </nav>
         </div>
         <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
@@ -50,21 +54,35 @@ function Header() {
 }
 
 // ---------------------------------------------------------------------------
+// Layout (uses useLocation for conditional max-width)
+// ---------------------------------------------------------------------------
+
+function Layout() {
+  const location = useLocation();
+  const isWide = location.pathname === "/trading";
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main className={`mx-auto px-6 py-8 ${isWide ? "max-w-[1600px]" : "max-w-7xl"}`}>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/design-system" element={<DesignSystem />} />
+          <Route path="/trading" element={<Trading />} />
+        </Routes>
+      </main>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // App
 // ---------------------------------------------------------------------------
 
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-background">
-        <Header />
-        <main className="mx-auto max-w-7xl px-6 py-8">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/design-system" element={<DesignSystem />} />
-          </Routes>
-        </main>
-      </div>
+      <Layout />
     </BrowserRouter>
   );
 }
