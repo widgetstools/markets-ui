@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -6,6 +6,7 @@ import {
   Shield,
   BarChart3,
   X,
+  Plus,
 } from "lucide-react";
 import {
   Card,
@@ -22,6 +23,17 @@ import {
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Separator } from "../components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../components/ui/dialog";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Textarea } from "../components/ui/textarea";
+import { ScrollArea } from "../components/ui/scroll-area";
 import { AgGridReact } from "ag-grid-react";
 import {
   AllCommunityModule,
@@ -98,6 +110,19 @@ interface Risk {
   var: number;
 }
 
+interface LadderLevel {
+  price: number;
+  bidSize: number;
+  askSize: number;
+}
+
+interface OrderPrefill {
+  cusip?: string;
+  issuer?: string;
+  side?: "BUY" | "SELL";
+  limitPrice?: number;
+}
+
 // ---------------------------------------------------------------------------
 // Data: 12 Fixed Income Positions
 // ---------------------------------------------------------------------------
@@ -151,7 +176,7 @@ const rfqs: RFQ[] = [
 // Data: Orders
 // ---------------------------------------------------------------------------
 
-const orders: Order[] = [
+const ORDERS: Order[] = [
   { orderId: "ORD-12040", side: "BUY", cusip: "037833AK6", type: "Limit", qty: 5000000, limit: 98.00, status: "Working", time: "09:30:00" },
   { orderId: "ORD-12041", side: "SELL", cusip: "46625HJY5", type: "Market", qty: 4000000, limit: 0, status: "Filled", time: "09:45:18" },
   { orderId: "ORD-12042", side: "BUY", cusip: "594918BW3", type: "Limit", qty: 10000000, limit: 96.50, status: "Working", time: "10:00:05" },
@@ -211,6 +236,389 @@ function formatPnl(value: number): string {
     return prefix + "$" + (value / 1_000_000).toFixed(2) + "M";
   }
   return prefix + "$" + value.toLocaleString("en-US");
+}
+
+// ---------------------------------------------------------------------------
+// Helper: deterministic pseudo-random from string seed
+// ---------------------------------------------------------------------------
+
+function seededRandom(seed: string): () => number {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) {
+    h = (Math.imul(31, h) + seed.charCodeAt(i)) | 0;
+  }
+  return () => {
+    h = (Math.imul(16807, h) + 1) | 0;
+    return (h >>> 0) / 4294967296;
+  };
+}
+
+const IG_RATINGS = new Set([
+  "AAA", "AA+", "AA", "AA-", "A+", "A", "A-",
+  "BBB+", "BBB", "BBB-",
+]);
+
+function generateLadderLevels(position: Position): LadderLevel[] {
+  const rng = seededRandom(position.cusip);
+  const isIG = IG_RATINGS.has(position.rating);
+  const spread = isIG ? 0.125 : 0.50;
+  const tick = spread / 10;
+  const bestBid = position.price - spread / 2;
+  const bestAsk = position.price + spread / 2;
+
+  const levels: LadderLevel[] = [];
+
+  // Ask levels (10): best ask is index 0 (lowest ask), worst ask is index 9 (highest)
+  for (let i = 0; i < 10; i++) {
+    const price = bestAsk + i * tick;
+    // Size tapers: best level 15-25M, worst level 1-3M
+    const factor = 1 - i / 9; // 1 at best, 0 at worst
+    const minSize = 1 + factor * 14; // 1M to 15M
+    const maxSize = 3 + factor * 22; // 3M to 25M
+    const size = minSize + rng() * (maxSize - minSize);
+    levels.push({ price: Math.round(price * 1000) / 1000, bidSize: 0, askSize: Math.round(size * 100) / 100 });
+  }
+
+  // Bid levels (10): best bid is index 0 (highest bid), worst bid is index 9 (lowest)
+  for (let i = 0; i < 10; i++) {
+    const price = bestBid - i * tick;
+    const factor = 1 - i / 9;
+    const minSize = 1 + factor * 14;
+    const maxSize = 3 + factor * 22;
+    const size = minSize + rng() * (maxSize - minSize);
+    levels.push({ price: Math.round(price * 1000) / 1000, bidSize: Math.round(size * 100) / 100, askSize: 0 });
+  }
+
+  // Sort by price descending (asks on top, bids on bottom)
+  levels.sort((a, b) => b.price - a.price);
+  return levels;
+}
+
+function formatSize(val: number): string {
+  if (val >= 1) return val.toFixed(1) + "M";
+  return (val * 1000).toFixed(0) + "K";
+}
+
+// ---------------------------------------------------------------------------
+// Component: Order Ticket Dialog
+// ---------------------------------------------------------------------------
+
+function OrderTicketDialog({
+  open,
+  onOpenChange,
+  prefill,
+  onSubmit,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  prefill?: OrderPrefill;
+  onSubmit: (order: Order) => void;
+}) {
+  const [side, setSide] = useState<"BUY" | "SELL">(prefill?.side ?? "BUY");
+  const [cusip, setCusip] = useState(prefill?.cusip ?? "");
+  const [orderType, setOrderType] = useState<"Limit" | "Market" | "Stop">("Limit");
+  const [quantity, setQuantity] = useState("");
+  const [limitPrice, setLimitPrice] = useState(prefill?.limitPrice?.toFixed(3) ?? "");
+  const [tif, setTif] = useState("DAY");
+  const [account, setAccount] = useState("CREDIT-MAIN");
+  const [notes, setNotes] = useState("");
+
+  // Resolve issuer from positions data
+  const resolvedIssuer = useMemo(() => {
+    if (prefill?.issuer) return prefill.issuer;
+    const pos = positions.find((p) => p.cusip === cusip);
+    return pos?.issuer ?? "";
+  }, [cusip, prefill?.issuer]);
+
+  // Reset form when prefill changes
+  const prefillKey = `${prefill?.cusip}-${prefill?.side}-${prefill?.limitPrice}`;
+  const [lastPrefillKey, setLastPrefillKey] = useState(prefillKey);
+  if (prefillKey !== lastPrefillKey) {
+    setLastPrefillKey(prefillKey);
+    setSide(prefill?.side ?? "BUY");
+    setCusip(prefill?.cusip ?? "");
+    setLimitPrice(prefill?.limitPrice?.toFixed(3) ?? "");
+    setOrderType(prefill?.limitPrice ? "Limit" : "Limit");
+  }
+
+  const handleSubmit = () => {
+    const qty = parseFloat(quantity) || 0;
+    const lim = parseFloat(limitPrice) || 0;
+    const now = new Date();
+    const timeStr = [now.getHours(), now.getMinutes(), now.getSeconds()]
+      .map((n) => String(n).padStart(2, "0"))
+      .join(":");
+    const order: Order = {
+      orderId: `ORD-${12048 + Math.floor(Math.random() * 9000)}`,
+      side,
+      cusip,
+      type: orderType,
+      qty: qty * 1_000_000,
+      limit: orderType === "Market" ? 0 : lim,
+      status: "Working",
+      time: timeStr,
+    };
+    onSubmit(order);
+    onOpenChange(false);
+  };
+
+  const selectClass =
+    "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring";
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>New Order</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          {/* Side */}
+          <div className="space-y-1.5">
+            <Label className="text-sm">Side</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={side === "BUY" ? "default" : "outline"}
+                className={side === "BUY" ? "flex-1 bg-[hsl(158,68%,44%)] hover:bg-[hsl(158,68%,38%)] text-white" : "flex-1"}
+                onClick={() => setSide("BUY")}
+              >
+                Buy
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={side === "SELL" ? "default" : "outline"}
+                className={side === "SELL" ? "flex-1 bg-[hsl(350,89%,60%)] hover:bg-[hsl(350,89%,54%)] text-white" : "flex-1"}
+                onClick={() => setSide("SELL")}
+              >
+                Sell
+              </Button>
+            </div>
+          </div>
+
+          {/* CUSIP */}
+          <div className="space-y-1.5">
+            <Label className="text-sm">CUSIP</Label>
+            <Input
+              value={cusip}
+              onChange={(e) => setCusip(e.target.value)}
+              placeholder="e.g. 037833AK6"
+              className="font-mono"
+            />
+          </div>
+
+          {/* Issuer (read-only) */}
+          {resolvedIssuer && (
+            <div className="space-y-1.5">
+              <Label className="text-sm">Issuer</Label>
+              <p className="text-sm font-medium px-3 py-2 rounded-md bg-muted">{resolvedIssuer}</p>
+            </div>
+          )}
+
+          {/* Order Type */}
+          <div className="space-y-1.5">
+            <Label className="text-sm">Order Type</Label>
+            <select
+              value={orderType}
+              onChange={(e) => setOrderType(e.target.value as "Limit" | "Market" | "Stop")}
+              className={selectClass}
+            >
+              <option value="Limit">Limit</option>
+              <option value="Market">Market</option>
+              <option value="Stop">Stop</option>
+            </select>
+          </div>
+
+          {/* Quantity */}
+          <div className="space-y-1.5">
+            <Label className="text-sm">Quantity ($M)</Label>
+            <Input
+              type="number"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              placeholder="e.g. 5"
+              className="font-mono"
+            />
+          </div>
+
+          {/* Limit Price (only for Limit/Stop) */}
+          {orderType !== "Market" && (
+            <div className="space-y-1.5">
+              <Label className="text-sm">Limit Price</Label>
+              <Input
+                type="number"
+                step="0.001"
+                value={limitPrice}
+                onChange={(e) => setLimitPrice(e.target.value)}
+                placeholder="e.g. 98.250"
+                className="font-mono"
+              />
+            </div>
+          )}
+
+          {/* Time in Force */}
+          <div className="space-y-1.5">
+            <Label className="text-sm">Time in Force</Label>
+            <select value={tif} onChange={(e) => setTif(e.target.value)} className={selectClass}>
+              <option value="DAY">Day</option>
+              <option value="GTC">GTC</option>
+              <option value="IOC">IOC</option>
+              <option value="FOK">FOK</option>
+            </select>
+          </div>
+
+          {/* Account */}
+          <div className="space-y-1.5">
+            <Label className="text-sm">Account</Label>
+            <select value={account} onChange={(e) => setAccount(e.target.value)} className={selectClass}>
+              <option value="CREDIT-MAIN">CREDIT-MAIN</option>
+              <option value="CREDIT-PROP">CREDIT-PROP</option>
+              <option value="RATES-HEDGE">RATES-HEDGE</option>
+            </select>
+          </div>
+
+          {/* Notes */}
+          <div className="space-y-1.5">
+            <Label className="text-sm">Notes</Label>
+            <Textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Optional notes..."
+              rows={2}
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            className="bg-[hsl(var(--mdl-accent))] text-white hover:bg-[hsl(var(--mdl-accent))]/90"
+          >
+            Submit Order
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Component: Price Ladder
+// ---------------------------------------------------------------------------
+
+function PriceLadder({
+  position,
+  onPriceClick,
+  onBuy,
+  onSell,
+}: {
+  position: Position;
+  onPriceClick: (price: number, side: "BUY" | "SELL") => void;
+  onBuy: () => void;
+  onSell: () => void;
+}) {
+  const levels = useMemo(() => generateLadderLevels(position), [position]);
+  const isIG = IG_RATINGS.has(position.rating);
+  const spread = isIG ? 0.125 : 0.50;
+  const spreadBps = (spread / position.price) * 10000;
+
+  const maxBidSize = Math.max(...levels.map((l) => l.bidSize));
+  const maxAskSize = Math.max(...levels.map((l) => l.askSize));
+
+  // Find best bid / best ask
+  const bestAskLevel = levels.filter((l) => l.askSize > 0).at(-1);
+  const bestBidLevel = levels.filter((l) => l.bidSize > 0).at(0);
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="px-3 py-2 border-b">
+        <p className="text-sm font-semibold">{position.description}</p>
+        <p className="text-xs text-muted-foreground">{position.issuer} &middot; {position.rating}</p>
+      </div>
+
+      {/* Column Headers */}
+      <div className="grid grid-cols-3 px-3 py-1.5 text-xs text-muted-foreground font-medium border-b">
+        <span className="text-right">Bid Sz</span>
+        <span className="text-center">Price</span>
+        <span className="text-right">Ask Sz</span>
+      </div>
+
+      {/* Levels */}
+      <ScrollArea className="flex-1">
+        <div className="divide-y divide-border/50">
+          {levels.map((level, i) => {
+            const isAsk = level.askSize > 0;
+            const isBid = level.bidSize > 0;
+            const isBestBid = bestBidLevel && level.price === bestBidLevel.price && isBid;
+            const isBestAsk = bestAskLevel && level.price === bestAskLevel.price && isAsk;
+
+            // Background intensity based on relative size
+            let bg = "transparent";
+            if (isAsk) {
+              const intensity = level.askSize / maxAskSize;
+              const alpha = isBestAsk ? Math.max(intensity * 0.2, 0.12) : intensity * 0.15;
+              bg = `hsl(350 89% 60% / ${alpha.toFixed(3)})`;
+            } else if (isBid) {
+              const intensity = level.bidSize / maxBidSize;
+              const alpha = isBestBid ? Math.max(intensity * 0.2, 0.12) : intensity * 0.15;
+              bg = `hsl(158 68% 44% / ${alpha.toFixed(3)})`;
+            }
+
+            return (
+              <div
+                key={i}
+                className="grid grid-cols-3 px-3 py-1 cursor-pointer hover:bg-accent/50 transition-colors"
+                style={{ background: bg }}
+                onClick={() => onPriceClick(level.price, isAsk ? "BUY" : "SELL")}
+              >
+                <span className="text-right font-mono text-xs">
+                  {isBid ? formatSize(level.bidSize) : ""}
+                </span>
+                <span
+                  className={`text-center font-mono text-xs ${
+                    isBestBid ? "font-bold text-[hsl(158,68%,44%)]" : isBestAsk ? "font-bold text-[hsl(350,89%,60%)]" : ""
+                  }`}
+                >
+                  {level.price.toFixed(3)}
+                </span>
+                <span className="text-right font-mono text-xs">
+                  {isAsk ? formatSize(level.askSize) : ""}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </ScrollArea>
+
+      {/* Spread + buttons */}
+      <div className="border-t px-3 py-2 space-y-2">
+        <p className="text-xs text-muted-foreground text-center font-mono">
+          Spread: {spread.toFixed(3)} ({spreadBps.toFixed(1)} bps)
+        </p>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            className="flex-1 bg-[hsl(158,68%,44%)] hover:bg-[hsl(158,68%,38%)] text-white"
+            onClick={onBuy}
+          >
+            Buy
+          </Button>
+          <Button
+            size="sm"
+            className="flex-1 bg-[hsl(350,89%,60%)] hover:bg-[hsl(350,89%,54%)] text-white"
+            onClick={onSell}
+          >
+            Sell
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -610,14 +1018,18 @@ function SectorAllocationBar() {
 function BondDetailPanel({
   position,
   onClose,
+  onTrade,
+  onPriceClick,
 }: {
   position: Position;
   onClose: () => void;
+  onTrade: () => void;
+  onPriceClick: (price: number, side: "BUY" | "SELL") => void;
 }) {
   const pnlColor = position.pnl >= 0 ? "hsl(158, 68%, 44%)" : "hsl(350, 89%, 60%)";
 
   return (
-    <Card className="h-full">
+    <Card className="h-full flex flex-col">
       <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
         <div>
           <CardTitle className="text-base">{position.issuer}</CardTitle>
@@ -625,72 +1037,100 @@ function BondDetailPanel({
             {position.description}
           </p>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose} className="h-7 w-7">
-          <X className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={onTrade}
+          >
+            Trade
+          </Button>
+          <Button variant="ghost" size="icon" onClick={onClose} className="h-7 w-7">
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div>
-          <p className="text-xs text-muted-foreground mb-1">Unrealized P&amp;L</p>
-          <p className="text-2xl font-bold" style={{ ...MONO_STYLE, color: pnlColor }}>
-            {formatPnl(position.pnl)}
-          </p>
-        </div>
-        <Separator />
-        <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
-          <div>
-            <p className="text-xs text-muted-foreground">CUSIP</p>
-            <p className="font-medium" style={MONO_STYLE}>{position.cusip}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Side</p>
-            <Badge variant={position.side === "LONG" ? "default" : "destructive"} className="text-xs">
-              {position.side}
-            </Badge>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Coupon</p>
-            <p className="font-medium" style={MONO_STYLE}>{position.coupon.toFixed(3)}%</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Maturity</p>
-            <p className="font-medium" style={MONO_STYLE}>{position.maturity}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Rating</p>
-            <p className="font-medium" style={{ color: getRatingColor(position.rating) }}>
-              {position.rating}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Sector</p>
-            <p className="font-medium">{position.sector}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Notional</p>
-            <p className="font-medium" style={MONO_STYLE}>{formatCurrency(position.notional)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Price</p>
-            <p className="font-medium" style={MONO_STYLE}>{position.price.toFixed(2)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Mkt Value</p>
-            <p className="font-medium" style={MONO_STYLE}>{formatCurrency(position.mktValue)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Yield</p>
-            <p className="font-medium" style={MONO_STYLE}>{position.yield.toFixed(2)}%</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Duration</p>
-            <p className="font-medium" style={MONO_STYLE}>{position.duration.toFixed(1)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">DV01</p>
-            <p className="font-medium" style={MONO_STYLE}>${formatNumber(position.dv01)}</p>
-          </div>
-        </div>
+      <CardContent className="flex-1 overflow-hidden p-0">
+        <Tabs defaultValue="details" className="flex flex-col h-full">
+          <TabsList className="mx-4 mb-0 w-fit">
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="ladder">Ladder</TabsTrigger>
+          </TabsList>
+          <TabsContent value="details" className="flex-1 overflow-auto px-4 pb-4 mt-3">
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Unrealized P&amp;L</p>
+                <p className="text-2xl font-bold" style={{ ...MONO_STYLE, color: pnlColor }}>
+                  {formatPnl(position.pnl)}
+                </p>
+              </div>
+              <Separator />
+              <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                <div>
+                  <p className="text-xs text-muted-foreground">CUSIP</p>
+                  <p className="font-medium" style={MONO_STYLE}>{position.cusip}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Side</p>
+                  <Badge variant={position.side === "LONG" ? "default" : "destructive"} className="text-xs">
+                    {position.side}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Coupon</p>
+                  <p className="font-medium" style={MONO_STYLE}>{position.coupon.toFixed(3)}%</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Maturity</p>
+                  <p className="font-medium" style={MONO_STYLE}>{position.maturity}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Rating</p>
+                  <p className="font-medium" style={{ color: getRatingColor(position.rating) }}>
+                    {position.rating}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Sector</p>
+                  <p className="font-medium">{position.sector}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Notional</p>
+                  <p className="font-medium" style={MONO_STYLE}>{formatCurrency(position.notional)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Price</p>
+                  <p className="font-medium" style={MONO_STYLE}>{position.price.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Mkt Value</p>
+                  <p className="font-medium" style={MONO_STYLE}>{formatCurrency(position.mktValue)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Yield</p>
+                  <p className="font-medium" style={MONO_STYLE}>{position.yield.toFixed(2)}%</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Duration</p>
+                  <p className="font-medium" style={MONO_STYLE}>{position.duration.toFixed(1)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">DV01</p>
+                  <p className="font-medium" style={MONO_STYLE}>${formatNumber(position.dv01)}</p>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+          <TabsContent value="ladder" className="flex-1 overflow-hidden mt-0">
+            <PriceLadder
+              position={position}
+              onPriceClick={onPriceClick}
+              onBuy={() => onPriceClick(position.price, "BUY")}
+              onSell={() => onPriceClick(position.price, "SELL")}
+            />
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
@@ -702,14 +1142,43 @@ function BondDetailPanel({
 
 export default function Trading() {
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
+  const [orderTicketOpen, setOrderTicketOpen] = useState(false);
+  const [orderPrefill, setOrderPrefill] = useState<OrderPrefill>({});
+  const [orders, setOrders] = useState<Order[]>(ORDERS);
+
+  const openOrderTicket = (prefill?: OrderPrefill) => {
+    setOrderPrefill(prefill ?? {});
+    setOrderTicketOpen(true);
+  };
+
+  const handleOrderSubmit = (order: Order) => {
+    setOrders((prev) => [order, ...prev]);
+  };
 
   return (
     <div className="space-y-4">
       {/* Page Header */}
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Fixed Income Trading</h2>
-        <p className="text-muted-foreground">Credit desk positions &amp; risk management</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Fixed Income Trading</h2>
+          <p className="text-muted-foreground">Credit desk positions &amp; risk management</p>
+        </div>
+        <Button
+          onClick={() => openOrderTicket()}
+          className="bg-[hsl(var(--mdl-accent))] text-white hover:bg-[hsl(var(--mdl-accent))]/90"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          New Order
+        </Button>
       </div>
+
+      {/* Order Ticket Dialog */}
+      <OrderTicketDialog
+        open={orderTicketOpen}
+        onOpenChange={setOrderTicketOpen}
+        prefill={orderPrefill}
+        onSubmit={handleOrderSubmit}
+      />
 
       {/* Portfolio Summary Strip */}
       <PortfolioSummary />
@@ -746,6 +1215,20 @@ export default function Trading() {
           <BondDetailPanel
             position={selectedPosition}
             onClose={() => setSelectedPosition(null)}
+            onTrade={() =>
+              openOrderTicket({
+                cusip: selectedPosition.cusip,
+                issuer: selectedPosition.issuer,
+              })
+            }
+            onPriceClick={(price, side) =>
+              openOrderTicket({
+                cusip: selectedPosition.cusip,
+                issuer: selectedPosition.issuer,
+                side,
+                limitPrice: price,
+              })
+            }
           />
         )}
       </div>
