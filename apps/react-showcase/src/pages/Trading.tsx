@@ -29,7 +29,10 @@ import {
   type DockManagerState,
   createTheme,
 } from "@widgetstools/react-dock-manager";
-// Note: @widgetstools/react-dock-manager applies its own CSS vars inline via applyTheme
+// Core dock manager CSS — imported via Vite alias to bypass package export restrictions
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — resolved by Vite alias in vite.config.ts
+import "dock-manager-css";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -744,6 +747,7 @@ interface TradingContextValue {
   openOrderTicket: (prefill?: OrderPrefill) => void;
   orders: Order[];
   addOrder: (o: Order) => void;
+  closeOrderTicket: () => void;
   livePositions: LivePosition[];
   filteredPositions: LivePosition[];
   positionFilter: "All" | "IG" | "HY" | "GOVT";
@@ -1316,8 +1320,8 @@ function PriceLadderWidget(_props: WidgetProps) {
 // Dock Widget: Order Ticket (floating)
 // ---------------------------------------------------------------------------
 
-function OrderTicketWidget({ panel, api: panelApi }: WidgetProps) {
-  const { addOrder } = useContext(TradingContext);
+function OrderTicketWidget({ panel }: WidgetProps) {
+  const { addOrder, closeOrderTicket } = useContext(TradingContext);
   const prefill = (panel.widgetProps as Record<string, unknown> | undefined)?.prefill as OrderPrefill | undefined;
 
   const [side, setSide] = useState<"BUY" | "SELL">(prefill?.side ?? "BUY");
@@ -1338,8 +1342,8 @@ function OrderTicketWidget({ panel, api: panelApi }: WidgetProps) {
   const isBuy = side === "BUY";
 
   const handleClose = useCallback(() => {
-    panelApi.close();
-  }, [panelApi]);
+    closeOrderTicket();
+  }, [closeOrderTicket]);
 
   const handleSubmit = useCallback(() => {
     const order: Order = {
@@ -1772,6 +1776,7 @@ export default function Trading() {
     openOrderTicket,
     orders,
     addOrder,
+    closeOrderTicket: () => { try { api?.closePanel("order-ticket"); } catch { /* not open */ } },
     livePositions,
     filteredPositions,
     positionFilter,
@@ -1785,7 +1790,7 @@ export default function Trading() {
     timeSales,
   }), [
     selectedPosition, setSelectedPositionTracked, openOrderTicket,
-    orders, addOrder, livePositions, filteredPositions,
+    orders, addOrder, api, livePositions, filteredPositions,
     positionFilter, detailTab, totalNotional, totalMktValue, totalPnl, totalDv01, timeSales,
   ]);
 
