@@ -1389,7 +1389,8 @@ export default function Trading() {
 
       const existing = api.getPanel("detail");
       if (existing) {
-        // Update params on the existing panel
+        // Update params and title on the existing panel
+        existing.setTitle(pos.issuer);
         existing.api.updateParameters({
           position: pos,
           onClose: () => {
@@ -1411,12 +1412,11 @@ export default function Trading() {
             }),
         });
       } else {
-        // Add new detail panel to the right of positions
-        const posPanel = api.getPanel("positions");
+        // Add as a floating panel (like thinkorswim popup)
         api.addPanel({
           id: "detail",
           component: "detail",
-          title: `${pos.issuer} Detail`,
+          title: pos.issuer,
           params: {
             position: pos,
             onClose: () => {
@@ -1437,10 +1437,7 @@ export default function Trading() {
                 limitPrice: price,
               }),
           },
-          position: posPanel
-            ? { direction: "right" as const, referencePanel: posPanel }
-            : undefined,
-          initialWidth: 340,
+          floating: { width: 380, height: 500, x: 100, y: 50 },
         });
       }
     },
@@ -1478,6 +1475,7 @@ export default function Trading() {
         title: "Activity",
         params: { orders },
         position: { direction: "below" as const, referencePanel: posPanel },
+        initialHeight: 300,
       });
 
       // Lock groups so panels are not closable / draggable
