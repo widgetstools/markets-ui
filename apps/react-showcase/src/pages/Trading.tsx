@@ -860,13 +860,16 @@ function PriceLadder({
 // Component: Inline Order Ticket
 // ---------------------------------------------------------------------------
 
-function InlineOrderTicket({
-  active,
+/**
+ * Floating Order Ticket — draggable panel that hovers over the trading grid.
+ * Positioned absolutely within the page container, can be moved by dragging
+ * the header bar. Uses the same form fields as the previous inline version.
+ */
+function FloatingOrderTicket({
   onClose,
   prefill,
   onSubmit,
 }: {
-  active: boolean;
   onClose: () => void;
   prefill?: OrderPrefill;
   onSubmit: (order: Order) => void;
@@ -878,12 +881,39 @@ function InlineOrderTicket({
   const [limitPrice, setLimitPrice] = useState(prefill?.limitPrice?.toFixed(3) ?? "");
   const [tif, setTif] = useState("DAY");
 
+  // Drag state
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ x: window.innerWidth - 400, y: 80 });
+  const dragging = useRef(false);
+  const dragOffset = useRef({ x: 0, y: 0 });
+
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    dragging.current = true;
+    dragOffset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
+    e.preventDefault();
+  }, [pos]);
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!dragging.current) return;
+      setPos({ x: e.clientX - dragOffset.current.x, y: e.clientY - dragOffset.current.y });
+    };
+    const onMouseUp = () => { dragging.current = false; };
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, []);
+
   const resolvedIssuer = useMemo(() => {
     if (prefill?.issuer) return prefill.issuer;
-    const pos = positions.find((p) => p.cusip === cusip);
-    return pos?.issuer ?? "";
+    const p = positions.find((r) => r.cusip === cusip);
+    return p?.issuer ?? "";
   }, [cusip, prefill?.issuer]);
 
+  // Sync prefill when it changes
   const prefillKey = `${prefill?.cusip}-${prefill?.side}-${prefill?.limitPrice}`;
   const [lastPrefillKey, setLastPrefillKey] = useState(prefillKey);
   if (prefillKey !== lastPrefillKey) {
@@ -896,6 +926,7 @@ function InlineOrderTicket({
 
   const qtyNum = parseFloat(quantity) || 0;
   const limNum = parseFloat(limitPrice) || 0;
+  const isBuy = side === "BUY";
 
   const handleSubmit = () => {
     const order: Order = {
@@ -912,41 +943,71 @@ function InlineOrderTicket({
     onClose();
   };
 
-  const isBuy = side === "BUY";
-
   const selectClass =
     "flex h-7 w-full rounded border border-border bg-secondary px-2 py-0.5 text-xs shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring appearance-none cursor-pointer";
 
-  if (!active) {
-    return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "hsl(var(--muted-foreground))", fontSize: 11 }}>
-        Click + Order or select Trade to begin
-      </div>
-    );
-  }
-
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 8px", borderBottom: "1px solid hsl(var(--border))" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 12, fontWeight: 700 }}>Order</span>
-          {cusip && <span style={{ fontSize: 10, color: "hsl(var(--muted-foreground))", ...MONO }}>{cusip}</span>}
+    <div
+      ref={panelRef}
+      style={{
+        position: "fixed",
+        left: pos.x,
+        top: pos.y,
+        width: 320,
+        zIndex: 50,
+        background: "hsl(var(--card))",
+        border: "1px solid hsl(var(--border))",
+        borderRadius: 8,
+        boxShadow: "0 8px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      {/* Draggable header */}
+      <div
+        onMouseDown={onMouseDown}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "6px 10px",
+          borderBottom: "1px solid hsl(var(--border))",
+          cursor: "grab",
+          userSelect: "none",
+          background: isBuy
+            ? `linear-gradient(135deg, hsl(var(--card)), ${CLR_SUCCESS}15)`
+            : `linear-gradient(135deg, hsl(var(--card)), ${CLR_DANGER}15)`,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 700 }}>Order</span>
+          {cusip && (
+            <span style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", ...MONO }}>{cusip}</span>
+          )}
+          {resolvedIssuer && (
+            <span style={{ fontSize: 11, fontWeight: 500 }}>{resolvedIssuer}</span>
+          )}
         </div>
-        <button type="button" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "hsl(var(--muted-foreground))", padding: 2 }}>
+        <button
+          type="button"
+          onClick={onClose}
+          style={{ background: "none", border: "none", cursor: "pointer", color: "hsl(var(--muted-foreground))", padding: 2 }}
+        >
           <X style={{ width: 14, height: 14 }} />
         </button>
       </div>
 
       {/* Side toggle */}
-      <div style={{ display: "flex", margin: "6px 8px 4px", height: 24, borderRadius: 9999, overflow: "hidden", border: "1px solid hsl(var(--border))" }}>
+      <div style={{ display: "flex", margin: "8px 10px 6px", height: 28, borderRadius: 6, overflow: "hidden", border: "1px solid hsl(var(--border))" }}>
         <button
           type="button"
           onClick={() => setSide("BUY")}
           style={{
-            flex: 1, fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer",
+            flex: 1, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer",
             background: isBuy ? CLR_SUCCESS : "transparent",
             color: isBuy ? "#fff" : "hsl(var(--muted-foreground))",
+            transition: "all 0.15s ease",
           }}
         >
           BUY
@@ -955,9 +1016,10 @@ function InlineOrderTicket({
           type="button"
           onClick={() => setSide("SELL")}
           style={{
-            flex: 1, fontSize: 11, fontWeight: 700, border: "none", cursor: "pointer",
+            flex: 1, fontSize: 12, fontWeight: 700, border: "none", cursor: "pointer",
             background: !isBuy ? CLR_DANGER : "transparent",
             color: !isBuy ? "#fff" : "hsl(var(--muted-foreground))",
+            transition: "all 0.15s ease",
           }}
         >
           SELL
@@ -965,32 +1027,18 @@ function InlineOrderTicket({
       </div>
 
       {/* Form rows */}
-      <div style={{ flex: 1, overflow: "auto", padding: "4px 8px", display: "flex", flexDirection: "column", gap: 4 }}>
+      <div style={{ padding: "2px 10px 6px", display: "flex", flexDirection: "column", gap: 5 }}>
         {/* CUSIP */}
         <div style={{ display: "flex", alignItems: "center", height: 28 }}>
-          <Label style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", width: 70, flexShrink: 0 }}>CUSIP</Label>
-          <Input
-            value={cusip}
-            onChange={(e) => setCusip(e.target.value)}
-            className="h-7 text-xs font-mono bg-secondary border-border flex-1"
-          />
-        </div>
-
-        {/* Issuer */}
-        <div style={{ display: "flex", alignItems: "center", height: 28 }}>
-          <Label style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", width: 70, flexShrink: 0 }}>Issuer</Label>
-          <span style={{ fontSize: 12, ...MONO, color: "hsl(var(--foreground))" }}>{resolvedIssuer || "--"}</span>
+          <Label style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", width: 65, flexShrink: 0 }}>CUSIP</Label>
+          <Input value={cusip} onChange={(e) => setCusip(e.target.value)} className="h-7 text-xs font-mono bg-secondary border-border flex-1" />
         </div>
 
         {/* Type */}
         <div style={{ display: "flex", alignItems: "center", height: 28 }}>
-          <Label style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", width: 70, flexShrink: 0 }}>Type</Label>
+          <Label style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", width: 65, flexShrink: 0 }}>Type</Label>
           <div className="relative flex-1">
-            <select
-              value={orderType}
-              onChange={(e) => setOrderType(e.target.value as "Limit" | "Market" | "Stop")}
-              className={selectClass}
-            >
+            <select value={orderType} onChange={(e) => setOrderType(e.target.value as "Limit" | "Market" | "Stop")} className={selectClass}>
               <option value="Limit">Limit</option>
               <option value="Market">Market</option>
               <option value="Stop">Stop</option>
@@ -1001,53 +1049,29 @@ function InlineOrderTicket({
 
         {/* Qty */}
         <div style={{ display: "flex", alignItems: "center", height: 28 }}>
-          <Label style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", width: 70, flexShrink: 0 }}>Qty ($M)</Label>
+          <Label style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", width: 65, flexShrink: 0 }}>Qty ($M)</Label>
           <div style={{ display: "flex", alignItems: "center", gap: 2, flex: 1 }}>
-            <button
-              type="button"
-              onClick={() => setQuantity(String(Math.max(1, qtyNum - 1)))}
-              style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4, border: "1px solid hsl(var(--border))", background: "hsl(var(--secondary))", cursor: "pointer", flexShrink: 0 }}
-            >
+            <button type="button" onClick={() => setQuantity(String(Math.max(1, qtyNum - 1)))} style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4, border: "1px solid hsl(var(--border))", background: "hsl(var(--secondary))", cursor: "pointer", flexShrink: 0 }}>
               <Minus style={{ width: 10, height: 10, color: "hsl(var(--muted-foreground))" }} />
             </button>
-            <Input
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              className="h-7 text-xs font-mono text-center bg-secondary border-border flex-1"
-            />
-            <button
-              type="button"
-              onClick={() => setQuantity(String(qtyNum + 1))}
-              style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4, border: "1px solid hsl(var(--border))", background: "hsl(var(--secondary))", cursor: "pointer", flexShrink: 0 }}
-            >
+            <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} className="h-7 text-xs font-mono text-center bg-secondary border-border flex-1" />
+            <button type="button" onClick={() => setQuantity(String(qtyNum + 1))} style={{ width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 4, border: "1px solid hsl(var(--border))", background: "hsl(var(--secondary))", cursor: "pointer", flexShrink: 0 }}>
               <Plus style={{ width: 10, height: 10, color: "hsl(var(--muted-foreground))" }} />
             </button>
           </div>
         </div>
 
         {/* Limit Price */}
-        <div style={{ display: "flex", alignItems: "center", height: 28 }}>
-          <Label style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", width: 70, flexShrink: 0 }}>
-            {orderType === "Market" ? "Price" : "Limit Px"}
-          </Label>
-          {orderType === "Market" ? (
-            <span style={{ fontSize: 12, ...MONO, color: "hsl(var(--muted-foreground))" }}>MKT</span>
-          ) : (
-            <Input
-              type="number"
-              step="0.001"
-              value={limitPrice}
-              onChange={(e) => setLimitPrice(e.target.value)}
-              placeholder="98.250"
-              className="h-7 text-xs font-mono bg-secondary border-border flex-1"
-            />
-          )}
-        </div>
+        {orderType !== "Market" && (
+          <div style={{ display: "flex", alignItems: "center", height: 28 }}>
+            <Label style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", width: 65, flexShrink: 0 }}>Limit Px</Label>
+            <Input type="number" step="0.001" value={limitPrice} onChange={(e) => setLimitPrice(e.target.value)} placeholder="98.250" className="h-7 text-xs font-mono bg-secondary border-border flex-1" />
+          </div>
+        )}
 
         {/* TIF */}
         <div style={{ display: "flex", alignItems: "center", height: 28 }}>
-          <Label style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", width: 70, flexShrink: 0 }}>TIF</Label>
+          <Label style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", width: 65, flexShrink: 0 }}>TIF</Label>
           <div className="relative flex-1">
             <select value={tif} onChange={(e) => setTif(e.target.value)} className={selectClass}>
               <option value="DAY">Day</option>
@@ -1061,17 +1085,15 @@ function InlineOrderTicket({
       </div>
 
       {/* Footer */}
-      <div style={{ borderTop: "1px solid hsl(var(--border))", padding: "6px 8px", display: "flex", gap: 6 }}>
-        <Button variant="ghost" size="sm" className="h-7 text-xs flex-1" onClick={onClose}>
-          Cancel
-        </Button>
+      <div style={{ borderTop: "1px solid hsl(var(--border))", padding: "8px 10px", display: "flex", gap: 6 }}>
+        <Button variant="ghost" size="sm" className="h-7 text-xs flex-1" onClick={onClose}>Cancel</Button>
         <Button
           size="sm"
           className="h-7 text-xs flex-1 font-semibold"
           style={{ background: isBuy ? CLR_SUCCESS : CLR_DANGER, color: "#fff" }}
           onClick={handleSubmit}
         >
-          Submit {isBuy ? "Buy" : "Sell"}
+          {isBuy ? "Buy" : "Sell"} {resolvedIssuer ? resolvedIssuer.split(" ")[0] : ""}
         </Button>
       </div>
     </div>
@@ -1387,7 +1409,7 @@ export default function Trading() {
       style={{
         display: "grid",
         gridTemplateColumns: "1fr 340px",
-        gridTemplateRows: "32px 1fr 1fr",
+        gridTemplateRows: "32px 1.2fr 0.8fr",
         height: "calc(100vh - 48px)",
         background: "hsl(var(--background))",
         overflow: "hidden",
@@ -1652,13 +1674,14 @@ export default function Trading() {
       </div>
 
       {/* ================================================================
-          ROW 3 LEFT: ACTIVITY TABS
+          ROW 3: ACTIVITY TABS (spans both columns — order ticket is floating)
           ================================================================ */}
       <div
         style={{
+          gridColumn: "1 / -1",
           display: "flex",
           flexDirection: "column",
-          borderRight: "1px solid hsl(var(--border))",
+          borderTop: "1px solid hsl(var(--border))",
           overflow: "hidden",
         }}
       >
@@ -1692,17 +1715,18 @@ export default function Trading() {
         </Tabs>
       </div>
 
+      {/* Order ticket is a floating panel — see FloatingOrderTicket below */}
+
       {/* ================================================================
-          ROW 3 RIGHT: ORDER TICKET (inline)
+          FLOATING ORDER TICKET — positioned absolutely, draggable
           ================================================================ */}
-      <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <InlineOrderTicket
-          active={orderTicketOpen}
-          onClose={() => setOrderTicketOpen(false)}
+      {orderTicketOpen && (
+        <FloatingOrderTicket
           prefill={orderPrefill}
+          onClose={() => setOrderTicketOpen(false)}
           onSubmit={handleOrderSubmit}
         />
-      </div>
+      )}
     </div>
   );
 }
