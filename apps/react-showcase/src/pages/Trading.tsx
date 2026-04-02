@@ -1,20 +1,14 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Shield,
   X,
   Plus,
   Minus,
   ChevronDown,
+  DollarSign,
+  BarChart3,
+  AlertTriangle,
+  TrendingDown,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
 import {
   Tabs,
   TabsContent,
@@ -26,8 +20,6 @@ import { Button } from "../components/ui/button";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogFooter,
 } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
@@ -40,27 +32,17 @@ import {
   type ColDef,
 } from "ag-grid-community";
 import { marketsGridTheme } from "@marketsui/tokens/ag-grid-theme";
-import {
-  DockviewReact,
-  type DockviewReadyEvent,
-  type IDockviewPanelProps,
-  type DockviewApi,
-} from "dockview";
-import "dockview/dist/styles/dockview.css";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 // ---------------------------------------------------------------------------
-// Color constants — use CSS variable HSL strings for consistency
+// Color constants
 // ---------------------------------------------------------------------------
 
 const CLR_SUCCESS = "hsl(var(--mdl-success))";
-const CLR_SUCCESS_BG = "hsl(var(--mdl-success) / 0.15)";
 const CLR_DANGER = "hsl(var(--mdl-destructive))";
-const CLR_DANGER_BG = "hsl(var(--mdl-destructive) / 0.15)";
 const CLR_WARN = "#EAB308";
 
-// Reusable inline style constants
 const MONO: Record<string, string> = { fontFamily: "var(--font-mono, ui-monospace, monospace)", fontFeatureSettings: "'tnum'" };
 const MONO_RIGHT: Record<string, string> = { ...MONO, textAlign: "right" };
 const TABNUM: React.CSSProperties = { fontFeatureSettings: "'tnum'" };
@@ -257,10 +239,6 @@ function formatPnl(value: number): string {
   return prefix + "$" + value.toLocaleString("en-US");
 }
 
-// ---------------------------------------------------------------------------
-// Helper: deterministic pseudo-random from string seed
-// ---------------------------------------------------------------------------
-
 function seededRandom(seed: string): () => number {
   let h = 0;
   for (let i = 0; i < seed.length; i++) {
@@ -315,20 +293,6 @@ function formatSize(val: number): string {
 }
 
 // ---------------------------------------------------------------------------
-// Sector Allocation Data
-// ---------------------------------------------------------------------------
-
-const sectorAllocation = [
-  { sector: "Financials", pct: 24.5, color: "#6366F1" },
-  { sector: "Technology", pct: 21.2, color: "#06B6D4" },
-  { sector: "Government", pct: 18.1, color: "#8B5CF6" },
-  { sector: "Healthcare", pct: 11.0, color: "#10B981" },
-  { sector: "Industrials", pct: 10.8, color: "#F59E0B" },
-  { sector: "Consumer", pct: 10.4, color: "#EF4444" },
-  { sector: "Media", pct: 3.9, color: "#EC4899" },
-];
-
-// ---------------------------------------------------------------------------
 // Side cell style helper (shared by grids)
 // ---------------------------------------------------------------------------
 
@@ -349,16 +313,16 @@ const positionColDefs: ColDef<Position>[] = [
   {
     field: "side",
     headerName: "Side",
-    width: 90,
+    width: 70,
     cellStyle: (params) => sideCellStyle(params.value ?? "", "LONG"),
   },
-  { field: "cusip", headerName: "CUSIP", width: 110, cellStyle: () => MONO },
-  { field: "issuer", headerName: "Issuer", width: 160 },
-  { field: "description", headerName: "Description", width: 170, cellStyle: () => MONO },
+  { field: "cusip", headerName: "CUSIP", width: 100, cellStyle: () => MONO },
+  { field: "issuer", headerName: "Issuer", width: 140 },
+  { field: "description", headerName: "Desc", width: 150, cellStyle: () => MONO },
   {
     field: "rating",
-    headerName: "Rating",
-    width: 85,
+    headerName: "Rtg",
+    width: 65,
     cellStyle: (params) => ({
       color: getRatingColor(params.value ?? ""),
       fontWeight: 600,
@@ -366,51 +330,51 @@ const positionColDefs: ColDef<Position>[] = [
   },
   {
     field: "coupon",
-    headerName: "Coupon",
-    width: 90,
+    headerName: "Cpn",
+    width: 75,
     cellStyle: () => MONO,
     valueFormatter: (params) => params.value != null ? params.value.toFixed(3) + "%" : "",
   },
-  { field: "maturity", headerName: "Maturity", width: 110, cellStyle: () => MONO },
+  { field: "maturity", headerName: "Maturity", width: 100, cellStyle: () => MONO },
   {
     field: "notional",
     headerName: "Notional",
-    width: 120,
+    width: 110,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null ? formatNumber(params.value) : "",
   },
   {
     field: "price",
     headerName: "Price",
-    width: 85,
+    width: 75,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null ? params.value.toFixed(2) : "",
   },
   {
     field: "mktValue",
     headerName: "Mkt Value",
-    width: 120,
+    width: 110,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null ? formatNumber(params.value) : "",
   },
   {
     field: "yield",
     headerName: "Yield",
-    width: 80,
+    width: 70,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null ? params.value.toFixed(2) + "%" : "",
   },
   {
     field: "duration",
-    headerName: "Duration",
-    width: 90,
+    headerName: "Dur",
+    width: 65,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null ? params.value.toFixed(1) : "",
   },
   {
     field: "dv01",
     headerName: "DV01",
-    width: 100,
+    width: 90,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null ? "$" + formatNumber(params.value) : "",
   },
@@ -421,34 +385,34 @@ const positionColDefs: ColDef<Position>[] = [
 // ---------------------------------------------------------------------------
 
 const tradeColDefs: ColDef<Trade>[] = [
-  { field: "tradeId", headerName: "Trade ID", width: 110, cellStyle: () => MONO },
-  { field: "time", headerName: "Time", width: 100, cellStyle: () => MONO },
+  { field: "tradeId", headerName: "Trade ID", width: 100, cellStyle: () => MONO },
+  { field: "time", headerName: "Time", width: 85, cellStyle: () => MONO },
   {
     field: "side",
     headerName: "Side",
-    width: 80,
+    width: 70,
     cellStyle: (params) => sideCellStyle(params.value ?? "", "BUY"),
   },
-  { field: "cusip", headerName: "CUSIP", width: 110, cellStyle: () => MONO },
-  { field: "issuer", headerName: "Issuer", width: 160 },
+  { field: "cusip", headerName: "CUSIP", width: 100, cellStyle: () => MONO },
+  { field: "issuer", headerName: "Issuer", width: 140 },
   {
     field: "qty",
     headerName: "Qty",
-    width: 120,
+    width: 110,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null ? formatNumber(params.value) : "",
   },
   {
     field: "price",
     headerName: "Price",
-    width: 85,
+    width: 75,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null ? params.value.toFixed(2) : "",
   },
   {
     field: "status",
     headerName: "Status",
-    width: 100,
+    width: 85,
     cellStyle: (params) => ({
       color: params.value === "Filled" ? CLR_SUCCESS : params.value === "Partial" ? CLR_WARN : "",
       fontWeight: 600,
@@ -461,12 +425,12 @@ const tradeColDefs: ColDef<Trade>[] = [
 // ---------------------------------------------------------------------------
 
 const rfqColDefs: ColDef<RFQ>[] = [
-  { field: "rfqId", headerName: "RFQ ID", width: 100, cellStyle: () => MONO },
-  { field: "bond", headerName: "Bond", width: 150, cellStyle: () => MONO },
+  { field: "rfqId", headerName: "RFQ ID", width: 90, cellStyle: () => MONO },
+  { field: "bond", headerName: "Bond", width: 140, cellStyle: () => MONO },
   {
     field: "side",
     headerName: "Side",
-    width: 80,
+    width: 70,
     cellStyle: (params) => ({
       color: params.value === "BID" ? CLR_SUCCESS : CLR_WARN,
       fontWeight: 600,
@@ -475,41 +439,41 @@ const rfqColDefs: ColDef<RFQ>[] = [
   {
     field: "qty",
     headerName: "Qty",
-    width: 110,
+    width: 100,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null ? formatNumber(params.value) : "",
   },
   {
     field: "bid",
     headerName: "Bid",
-    width: 80,
+    width: 75,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null ? params.value.toFixed(2) : "",
   },
   {
     field: "offer",
     headerName: "Offer",
-    width: 80,
+    width: 75,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null ? params.value.toFixed(2) : "",
   },
   {
     field: "spread",
-    headerName: "Spread",
-    width: 80,
+    headerName: "Sprd",
+    width: 70,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null ? params.value.toFixed(2) : "",
   },
   {
     field: "status",
     headerName: "Status",
-    width: 90,
+    width: 80,
     cellStyle: (params) => ({
       color: params.value === "Done" ? CLR_SUCCESS : params.value === "Active" ? CLR_WARN : "hsl(var(--muted-foreground))",
       fontWeight: 600,
     }),
   },
-  { field: "dealer", headerName: "Dealer", width: 140 },
+  { field: "dealer", headerName: "Dealer", width: 130 },
 ];
 
 // ---------------------------------------------------------------------------
@@ -517,39 +481,39 @@ const rfqColDefs: ColDef<RFQ>[] = [
 // ---------------------------------------------------------------------------
 
 const orderColDefs: ColDef<Order>[] = [
-  { field: "orderId", headerName: "Order ID", width: 110, cellStyle: () => MONO },
+  { field: "orderId", headerName: "Order ID", width: 100, cellStyle: () => MONO },
   {
     field: "side",
     headerName: "Side",
-    width: 80,
+    width: 70,
     cellStyle: (params) => sideCellStyle(params.value ?? "", "BUY"),
   },
-  { field: "cusip", headerName: "CUSIP", width: 110, cellStyle: () => MONO },
-  { field: "type", headerName: "Type", width: 80 },
+  { field: "cusip", headerName: "CUSIP", width: 100, cellStyle: () => MONO },
+  { field: "type", headerName: "Type", width: 70 },
   {
     field: "qty",
     headerName: "Qty",
-    width: 120,
+    width: 110,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null ? formatNumber(params.value) : "",
   },
   {
     field: "limit",
     headerName: "Limit",
-    width: 85,
+    width: 75,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null && params.value > 0 ? params.value.toFixed(2) : "MKT",
   },
   {
     field: "status",
     headerName: "Status",
-    width: 100,
+    width: 90,
     cellStyle: (params) => ({
       color: params.value === "Filled" ? CLR_SUCCESS : params.value === "Working" ? CLR_WARN : params.value === "Partial" ? "#F97316" : params.value === "Cancelled" ? CLR_DANGER : "",
       fontWeight: 600,
     }),
   },
-  { field: "time", headerName: "Time", width: 100, cellStyle: () => MONO },
+  { field: "time", headerName: "Time", width: 85, cellStyle: () => MONO },
 ];
 
 // ---------------------------------------------------------------------------
@@ -557,40 +521,40 @@ const orderColDefs: ColDef<Order>[] = [
 // ---------------------------------------------------------------------------
 
 const riskColDefs: ColDef<Risk>[] = [
-  { field: "cusip", headerName: "CUSIP", width: 110, cellStyle: () => MONO },
-  { field: "issuer", headerName: "Issuer", width: 160 },
+  { field: "cusip", headerName: "CUSIP", width: 100, cellStyle: () => MONO },
+  { field: "issuer", headerName: "Issuer", width: 140 },
   {
     field: "dv01",
     headerName: "DV01",
-    width: 100,
+    width: 90,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null ? "$" + formatNumber(params.value) : "",
   },
   {
     field: "cr01",
     headerName: "CR01",
-    width: 100,
+    width: 90,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null ? "$" + formatNumber(params.value) : "",
   },
   {
     field: "spreadDuration",
     headerName: "Sprd Dur",
-    width: 95,
+    width: 85,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null ? params.value.toFixed(1) : "",
   },
   {
     field: "cs01",
     headerName: "CS01",
-    width: 100,
+    width: 90,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null ? "$" + formatNumber(params.value) : "",
   },
   {
     field: "var",
     headerName: "VaR",
-    width: 110,
+    width: 100,
     cellStyle: () => MONO_RIGHT,
     valueFormatter: (params) => params.value != null ? "$" + formatNumber(params.value) : "",
   },
@@ -605,6 +569,31 @@ const defaultColDef: ColDef = {
   filter: true,
   resizable: true,
 };
+
+// ---------------------------------------------------------------------------
+// Sector allocation data
+// ---------------------------------------------------------------------------
+
+const SECTOR_COLORS: Record<string, string> = {
+  Financials: "#22c55e",
+  Technology: "#3b82f6",
+  Government: "#a855f7",
+  Healthcare: "#f97316",
+  Industrials: "#ec4899",
+  Consumer: "#06b6d4",
+  Media: "#6b7280",
+  Energy: "#eab308",
+};
+
+// ---------------------------------------------------------------------------
+// P&L breakdown data (top issuers by absolute P&L)
+// ---------------------------------------------------------------------------
+
+function formatPnlK(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return "$" + (abs / 1_000_000).toFixed(1) + "M";
+  return "$" + (abs / 1_000).toFixed(1) + "K";
+}
 
 // ---------------------------------------------------------------------------
 // Component: Order Ticket Dialog (compact, dense)
@@ -650,7 +639,7 @@ function OrderTicketDialog({
 
   const qtyNum = parseFloat(quantity) || 0;
   const limNum = parseFloat(limitPrice) || 0;
-  const estimatedCost = qtyNum * limNum * 10_000; // qty in $M * price = notional
+  const estimatedCost = qtyNum * limNum * 10_000;
 
   const handleSubmit = () => {
     const now = new Date();
@@ -678,14 +667,12 @@ function OrderTicketDialog({
   const sideColor = isBuy ? CLR_SUCCESS : CLR_DANGER;
   const ticker = resolvedIssuer ? resolvedIssuer.split(" ")[0].toUpperCase() : "---";
 
-  // Simulated bid/ask from position price
   const bidPrice = resolvedPosition ? (resolvedPosition.price - 0.125).toFixed(2) : "--";
   const askPrice = resolvedPosition ? (resolvedPosition.price + 0.125).toFixed(2) : "--";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[360px] p-0 gap-0 overflow-hidden">
-        {/* Bond identifier header */}
         <div className="px-4 pt-4 pb-3">
           <div className="flex items-baseline gap-2">
             <span className="text-base font-bold">{ticker}</span>
@@ -695,7 +682,6 @@ function OrderTicketDialog({
           </div>
         </div>
 
-        {/* Buy / Sell toggle — connected pills */}
         <div className="px-4 pb-3">
           <div className="flex rounded-lg overflow-hidden h-8">
             <button
@@ -723,12 +709,9 @@ function OrderTicketDialog({
           </div>
         </div>
 
-        {/* Separator */}
         <div className="border-t border-border" />
 
-        {/* Form rows — label left, control right */}
         <div className="px-4 py-3 space-y-3">
-          {/* Order type */}
           <div className="flex items-center justify-between">
             <Label className="text-xs text-muted-foreground">Order type</Label>
             <div className="relative w-[55%]">
@@ -745,7 +728,6 @@ function OrderTicketDialog({
             </div>
           </div>
 
-          {/* Quantity with stepper */}
           <div className="flex items-center justify-between">
             <Label className="text-xs text-muted-foreground">Quantity ($M)</Label>
             <div className="flex items-center w-[55%] gap-1">
@@ -772,7 +754,6 @@ function OrderTicketDialog({
             </div>
           </div>
 
-          {/* Limit price */}
           <div>
             <div className="flex items-center justify-between">
               <Label className="text-xs text-muted-foreground">
@@ -802,7 +783,6 @@ function OrderTicketDialog({
             )}
           </div>
 
-          {/* Time in force */}
           <div className="flex items-center justify-between">
             <Label className="text-xs text-muted-foreground">Time in force</Label>
             <div className="relative w-[55%]">
@@ -817,10 +797,8 @@ function OrderTicketDialog({
           </div>
         </div>
 
-        {/* Separator */}
         <div className="border-t border-border" />
 
-        {/* Estimated cost section */}
         <div className="px-4 py-3">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold">Estimated cost</span>
@@ -837,7 +815,6 @@ function OrderTicketDialog({
           </p>
         </div>
 
-        {/* Footer: Cancel + Submit */}
         <DialogFooter className="px-4 pb-4 pt-0">
           <div className="flex gap-2 justify-end w-full">
             <Button variant="ghost" size="sm" className="h-8 text-xs px-4" onClick={() => onOpenChange(false)}>
@@ -859,7 +836,7 @@ function OrderTicketDialog({
 }
 
 // ---------------------------------------------------------------------------
-// Component: Price Ladder (monospace table, tight rows, cumulative size)
+// Component: Price Ladder
 // ---------------------------------------------------------------------------
 
 function PriceLadder({
@@ -880,13 +857,11 @@ function PriceLadder({
   const bestAskLevel = levels.filter((l) => l.askSize > 0).at(-1);
   const bestBidLevel = levels.filter((l) => l.bidSize > 0).at(0);
 
-  // Compute cumulative sizes
-  const askLevels = levels.filter((l) => l.askSize > 0); // sorted desc by price
-  const bidLevels = levels.filter((l) => l.bidSize > 0); // sorted desc by price
+  const askLevels = levels.filter((l) => l.askSize > 0);
+  const bidLevels = levels.filter((l) => l.bidSize > 0);
 
   const cumAsk = new Map<number, number>();
   let cumAskTotal = 0;
-  // Accumulate from worst (top) to best (bottom)
   for (const l of askLevels) {
     cumAskTotal += l.askSize;
     cumAsk.set(l.price, cumAskTotal);
@@ -894,7 +869,6 @@ function PriceLadder({
 
   const cumBid = new Map<number, number>();
   let cumBidTotal = 0;
-  // Accumulate from best (top) to worst (bottom)
   for (const l of bidLevels) {
     cumBidTotal += l.bidSize;
     cumBid.set(l.price, cumBidTotal);
@@ -902,13 +876,11 @@ function PriceLadder({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="px-3 py-1.5 border-b">
-        <p className="text-xs font-semibold" style={MONO}>{position.description}</p>
+      <div className="px-3 py-1 border-b">
+        <p className="text-[11px] font-semibold" style={MONO}>{position.description}</p>
         <p className="text-[10px] text-muted-foreground">{position.issuer} &middot; {position.rating}</p>
       </div>
 
-      {/* Column Headers */}
       <div
         className="grid px-2 py-1 text-[10px] text-muted-foreground font-medium border-b uppercase tracking-wider"
         style={{ gridTemplateColumns: "1fr 1fr 70px 1fr 1fr" }}
@@ -920,7 +892,6 @@ function PriceLadder({
         <span className="text-right">Cum</span>
       </div>
 
-      {/* Levels */}
       <ScrollArea className="flex-1">
         <div>
           {levels.map((level, i) => {
@@ -929,7 +900,6 @@ function PriceLadder({
             const isBestBid = bestBidLevel && level.price === bestBidLevel.price && isBid;
             const isBestAsk = bestAskLevel && level.price === bestAskLevel.price && isAsk;
 
-            // Detect spread gap row
             const nextLevel = levels[i + 1];
             const isSpreadRow = isAsk && nextLevel && nextLevel.bidSize > 0;
 
@@ -951,20 +921,20 @@ function PriceLadder({
                   style={{
                     gridTemplateColumns: "1fr 1fr 70px 1fr 1fr",
                     background: bg,
-                    height: 24,
+                    height: 22,
                     alignItems: "center",
                     borderLeft: isBestBid ? `2px solid ${CLR_SUCCESS}` : isBestAsk ? `2px solid ${CLR_DANGER}` : "2px solid transparent",
                   }}
                   onClick={() => onPriceClick(level.price, isAsk ? "BUY" : "SELL")}
                 >
-                  <span className="text-right font-mono text-[11px] text-muted-foreground" style={TABNUM}>
+                  <span className="text-right font-mono text-[10px] text-muted-foreground" style={TABNUM}>
                     {isBid ? formatSize(cumBid.get(level.price) ?? 0) : ""}
                   </span>
-                  <span className="text-right font-mono text-[11px]" style={TABNUM}>
+                  <span className="text-right font-mono text-[10px]" style={TABNUM}>
                     {isBid ? formatSize(level.bidSize) : ""}
                   </span>
                   <span
-                    className={`text-center font-mono text-[11px] ${
+                    className={`text-center font-mono text-[10px] ${
                       isBestBid ? "font-bold" : isBestAsk ? "font-bold" : ""
                     }`}
                     style={{
@@ -974,20 +944,19 @@ function PriceLadder({
                   >
                     {level.price.toFixed(3)}
                   </span>
-                  <span className="text-right font-mono text-[11px]" style={TABNUM}>
+                  <span className="text-right font-mono text-[10px]" style={TABNUM}>
                     {isAsk ? formatSize(level.askSize) : ""}
                   </span>
-                  <span className="text-right font-mono text-[11px] text-muted-foreground" style={TABNUM}>
+                  <span className="text-right font-mono text-[10px] text-muted-foreground" style={TABNUM}>
                     {isAsk ? formatSize(cumAsk.get(level.price) ?? 0) : ""}
                   </span>
                 </div>
-                {/* Spread indicator between best ask and best bid */}
                 {isSpreadRow && (
                   <div
                     className="flex items-center justify-center border-y border-dashed border-border/60"
-                    style={{ height: 20 }}
+                    style={{ height: 18 }}
                   >
-                    <span className="text-[10px] font-mono text-muted-foreground tracking-wide" style={TABNUM}>
+                    <span className="text-[9px] font-mono text-muted-foreground tracking-wide" style={TABNUM}>
                       Spread: {spreadBps.toFixed(1)} bps
                     </span>
                   </div>
@@ -1002,366 +971,7 @@ function PriceLadder({
 }
 
 // ---------------------------------------------------------------------------
-// Component: Portfolio Summary Strip (sleek, divider-separated)
-// ---------------------------------------------------------------------------
-
-function PortfolioSummary() {
-  const metrics = [
-    { label: "Total Notional", value: "$139.50M", sub: "12 positions", accent: "hsl(var(--mdl-success))", icon: DollarSign },
-    { label: "Market Value", value: "$137.54M", sub: "Mark-to-market", accent: "hsl(var(--mdl-success))", icon: TrendingUp },
-    { label: "Total P&L", value: "-$1.65M", sub: "-1.18% unrealized", accent: CLR_DANGER, icon: TrendingDown, valueColor: CLR_DANGER },
-    { label: "DV01", value: "$181,327", sub: "Dollar value of 1bp", accent: CLR_WARN, icon: Shield },
-  ];
-
-  return (
-    <div className="flex rounded-lg border bg-card overflow-hidden">
-      {metrics.map((m, i) => (
-        <div
-          key={m.label}
-          className="flex-1 relative px-4 py-3"
-          style={{ borderTop: `2px solid ${m.accent}` }}
-        >
-          {/* Divider */}
-          {i > 0 && (
-            <div className="absolute left-0 top-3 bottom-3 w-px bg-border" />
-          )}
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
-              {m.label}
-            </span>
-            <m.icon className="h-3.5 w-3.5 text-muted-foreground" />
-          </div>
-          <div
-            className="text-xl font-bold font-mono"
-            style={{ ...TABNUM, color: m.valueColor }}
-          >
-            {m.value}
-          </div>
-          <p className="text-[10px] text-muted-foreground mt-0.5">{m.sub}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Component: Sector Allocation Bar (sleek thin bar, inline labels)
-// ---------------------------------------------------------------------------
-
-function SectorAllocationBar() {
-  return (
-    <div className="rounded-lg border bg-card px-4 py-3">
-      <div className="flex items-center justify-between mb-2.5">
-        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">
-          Sector Allocation
-        </span>
-      </div>
-      <div className="flex items-center gap-3">
-        {/* Thin bar */}
-        <div className="flex h-[3px] flex-1 overflow-hidden rounded-full">
-          {sectorAllocation.map((s) => (
-            <div
-              key={s.sector}
-              style={{ width: `${s.pct}%`, backgroundColor: s.color }}
-              className="h-full transition-all hover:brightness-125 hover:shadow-[0_0_6px_currentColor]"
-              title={`${s.sector}: ${s.pct}%`}
-            />
-          ))}
-        </div>
-        {/* Inline labels */}
-        <div className="flex flex-wrap gap-x-3 gap-y-0.5 shrink-0">
-          {sectorAllocation.map((s) => (
-            <div key={s.sector} className="flex items-center gap-1 text-[10px] text-muted-foreground">
-              <span
-                className="inline-block h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: s.color }}
-              />
-              {s.sector} {s.pct}%
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Component: Bond Detail Panel (grouped metrics, polished)
-// ---------------------------------------------------------------------------
-
-function BondDetailPanel({
-  position,
-  onClose,
-  onTrade,
-  onPriceClick,
-}: {
-  position: Position;
-  onClose: () => void;
-  onTrade: () => void;
-  onPriceClick: (price: number, side: "BUY" | "SELL") => void;
-}) {
-  const pnlColor = position.pnl >= 0 ? CLR_SUCCESS : CLR_DANGER;
-  const pnlBg = position.pnl >= 0 ? "hsl(var(--mdl-success) / 0.08)" : "hsl(var(--mdl-destructive) / 0.08)";
-
-  const sectionHeader = (title: string) => (
-    <div className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground font-semibold mt-3 mb-1.5 first:mt-0">
-      {title}
-    </div>
-  );
-
-  const metric = (label: string, value: string, mono = true) => (
-    <div>
-      <p className="text-[10px] text-muted-foreground">{label}</p>
-      <p className="text-xs font-medium" style={mono ? MONO : undefined}>{value}</p>
-    </div>
-  );
-
-  return (
-    <Card className="h-full flex flex-col border-0 rounded-none">
-      <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2 pt-3 px-3">
-        <div className="min-w-0">
-          <CardTitle className="text-sm font-semibold truncate">{position.issuer}</CardTitle>
-          <p className="text-[11px] text-muted-foreground font-mono" style={TABNUM}>
-            {position.description}
-          </p>
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-6 text-[10px] px-2"
-            onClick={onTrade}
-          >
-            Trade
-          </Button>
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6">
-            <X className="h-3 w-3" />
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="flex-1 overflow-hidden p-0">
-        <Tabs defaultValue="details" className="flex flex-col h-full">
-          <TabsList className="mx-3 mb-0 w-fit h-7">
-            <TabsTrigger value="details" className="text-[11px] h-6 px-2.5">Details</TabsTrigger>
-            <TabsTrigger value="ladder" className="text-[11px] h-6 px-2.5">Ladder</TabsTrigger>
-          </TabsList>
-          <TabsContent value="details" className="flex-1 overflow-auto px-3 pb-3 mt-2">
-            {/* P&L display — prominent with subtle background bar */}
-            <div
-              className="rounded-md px-3 py-2 mb-3"
-              style={{ background: pnlBg }}
-            >
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-0.5">Unrealized P&amp;L</p>
-              <p className="text-xl font-bold font-mono" style={{ ...TABNUM, color: pnlColor }}>
-                {formatPnl(position.pnl)}
-              </p>
-            </div>
-
-            {/* Identity */}
-            {sectionHeader("Identity")}
-            <div className="grid grid-cols-3 gap-y-2 gap-x-2 text-xs">
-              {metric("CUSIP", position.cusip)}
-              <div>
-                <p className="text-[10px] text-muted-foreground">Rating</p>
-                <p className="text-xs font-semibold" style={{ color: getRatingColor(position.rating) }}>
-                  {position.rating}
-                </p>
-              </div>
-              {metric("Sector", position.sector, false)}
-            </div>
-
-            {/* Pricing */}
-            {sectionHeader("Pricing")}
-            <div className="grid grid-cols-3 gap-y-2 gap-x-2 text-xs">
-              {metric("Price", position.price.toFixed(2))}
-              {metric("Yield", position.yield.toFixed(2) + "%")}
-              {metric("Coupon", position.coupon.toFixed(3) + "%")}
-            </div>
-
-            {/* Risk */}
-            {sectionHeader("Risk")}
-            <div className="grid grid-cols-3 gap-y-2 gap-x-2 text-xs">
-              {metric("Duration", position.duration.toFixed(1))}
-              {metric("DV01", "$" + formatNumber(position.dv01))}
-              {metric("Notional", formatCurrency(position.notional))}
-            </div>
-
-            {/* Side + Maturity */}
-            {sectionHeader("Position")}
-            <div className="grid grid-cols-3 gap-y-2 gap-x-2 text-xs">
-              <div>
-                <p className="text-[10px] text-muted-foreground">Side</p>
-                <Badge variant={position.side === "LONG" ? "default" : "destructive"} className="text-[10px] h-4 px-1.5">
-                  {position.side}
-                </Badge>
-              </div>
-              {metric("Maturity", position.maturity)}
-              {metric("Mkt Value", formatCurrency(position.mktValue))}
-            </div>
-          </TabsContent>
-          <TabsContent value="ladder" className="flex-1 overflow-hidden mt-0">
-            <PriceLadder
-              position={position}
-              onPriceClick={onPriceClick}
-            />
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Dockview Panel Components
-// ---------------------------------------------------------------------------
-
-// Suppress unused-variable lint — these are used inside the panel props generics
-void CLR_SUCCESS_BG;
-void CLR_DANGER_BG;
-
-/** Positions blotter panel */
-function PositionsPanel(
-  props: IDockviewPanelProps<{ onRowClick: (pos: Position) => void }>
-) {
-  const { onRowClick } = props.params;
-  return (
-    <div className="h-full w-full bg-background">
-      <AgGridReact<Position>
-        theme={marketsGridTheme}
-        rowData={positions}
-        columnDefs={positionColDefs}
-        defaultColDef={defaultColDef}
-        rowHeight={28}
-        headerHeight={30}
-        animateRows={true}
-        rowSelection="single"
-        onRowClicked={(event) => {
-          if (event.data) onRowClick(event.data);
-        }}
-      />
-    </div>
-  );
-}
-
-/** Activity panel: Trades / RFQs / Orders / Risk tabs */
-function ActivityPanel(
-  props: IDockviewPanelProps<{ orders: Order[] }>
-) {
-  const { orders: ordersData } = props.params;
-  return (
-    <div className="h-full w-full bg-background overflow-hidden flex flex-col">
-      <Tabs defaultValue="trades" className="flex flex-col h-full">
-        <TabsList className="h-8 mx-2 mt-1 w-fit shrink-0">
-          <TabsTrigger value="trades" className="text-xs h-6 px-2.5 gap-1">
-            Trades
-            <span className="text-[10px] font-mono rounded-full bg-muted px-1.5 py-px" style={TABNUM}>
-              {trades.length}
-            </span>
-          </TabsTrigger>
-          <TabsTrigger value="rfqs" className="text-xs h-6 px-2.5 gap-1">
-            RFQs
-            <span className="text-[10px] font-mono rounded-full bg-muted px-1.5 py-px" style={TABNUM}>
-              {rfqs.length}
-            </span>
-          </TabsTrigger>
-          <TabsTrigger value="orders" className="text-xs h-6 px-2.5 gap-1">
-            Orders
-            <span className="text-[10px] font-mono rounded-full bg-muted px-1.5 py-px" style={TABNUM}>
-              {ordersData.length}
-            </span>
-          </TabsTrigger>
-          <TabsTrigger value="risk" className="text-xs h-6 px-2.5 gap-1">
-            Risk
-            <span className="text-[10px] font-mono rounded-full bg-muted px-1.5 py-px" style={TABNUM}>
-              {riskData.length}
-            </span>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="trades" className="flex-1 mt-0 overflow-hidden">
-          <div className="h-full w-full">
-            <AgGridReact<Trade>
-              theme={marketsGridTheme}
-              rowData={trades}
-              columnDefs={tradeColDefs}
-              defaultColDef={defaultColDef}
-              rowHeight={28}
-              headerHeight={30}
-              animateRows={true}
-            />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="rfqs" className="flex-1 mt-0 overflow-hidden">
-          <div className="h-full w-full">
-            <AgGridReact<RFQ>
-              theme={marketsGridTheme}
-              rowData={rfqs}
-              columnDefs={rfqColDefs}
-              defaultColDef={defaultColDef}
-              rowHeight={28}
-              headerHeight={30}
-              animateRows={true}
-            />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="orders" className="flex-1 mt-0 overflow-hidden">
-          <div className="h-full w-full">
-            <AgGridReact<Order>
-              theme={marketsGridTheme}
-              rowData={ordersData}
-              columnDefs={orderColDefs}
-              defaultColDef={defaultColDef}
-              rowHeight={28}
-              headerHeight={30}
-              animateRows={true}
-            />
-          </div>
-        </TabsContent>
-
-        <TabsContent value="risk" className="flex-1 mt-0 overflow-hidden">
-          <div className="h-full w-full">
-            <AgGridReact<Risk>
-              theme={marketsGridTheme}
-              rowData={riskData}
-              columnDefs={riskColDefs}
-              defaultColDef={defaultColDef}
-              rowHeight={28}
-              headerHeight={30}
-              animateRows={true}
-            />
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-}
-
-/** Detail panel: BondDetailPanel (with Price Ladder tab inside) */
-function DetailPanel(
-  props: IDockviewPanelProps<{
-    position: Position;
-    onClose: () => void;
-    onTrade: () => void;
-    onPriceClick: (price: number, side: "BUY" | "SELL") => void;
-  }>
-) {
-  const { position, onClose, onTrade, onPriceClick } = props.params;
-  return (
-    <div className="h-full w-full overflow-hidden bg-background">
-      <BondDetailPanel
-        position={position}
-        onClose={onClose}
-        onTrade={onTrade}
-        onPriceClick={onPriceClick}
-      />
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Component: Trading Page (Dockview layout)
+// Component: Trading Page
 // ---------------------------------------------------------------------------
 
 export default function Trading() {
@@ -1369,7 +979,9 @@ export default function Trading() {
   const [orderTicketOpen, setOrderTicketOpen] = useState(false);
   const [orderPrefill, setOrderPrefill] = useState<OrderPrefill>({});
   const [orders, setOrders] = useState<Order[]>(ORDERS);
-  const dockviewApiRef = useRef<DockviewApi | null>(null);
+  const [positionFilter, setPositionFilter] = useState<"All" | "IG" | "HY" | "GOVT">("All");
+  const [detailTab, setDetailTab] = useState<"details" | "ladder">("details");
+  const [pnlTab, setPnlTab] = useState<"pnl" | "dur" | "yld" | "risk">("pnl");
 
   const openOrderTicket = useCallback((prefill?: OrderPrefill) => {
     setOrderPrefill(prefill ?? {});
@@ -1380,169 +992,814 @@ export default function Trading() {
     setOrders((prev) => [order, ...prev]);
   }, []);
 
-  // Show or update the detail panel when a position is selected
-  const showDetailPanel = useCallback(
+  const handlePositionClick = useCallback(
     (pos: Position) => {
       setSelectedPosition(pos);
-      const api = dockviewApiRef.current;
-      if (!api) return;
-
-      const existing = api.getPanel("detail");
-      if (existing) {
-        // Update params and title on the existing panel
-        existing.setTitle(pos.issuer);
-        existing.api.updateParameters({
-          position: pos,
-          onClose: () => {
-            setSelectedPosition(null);
-            const panel = dockviewApiRef.current?.getPanel("detail");
-            if (panel) dockviewApiRef.current?.removePanel(panel);
-          },
-          onTrade: () =>
-            openOrderTicket({
-              cusip: pos.cusip,
-              issuer: pos.issuer,
-            }),
-          onPriceClick: (price: number, side: "BUY" | "SELL") =>
-            openOrderTicket({
-              cusip: pos.cusip,
-              issuer: pos.issuer,
-              side,
-              limitPrice: price,
-            }),
-        });
-      } else {
-        // Add as a floating panel (like thinkorswim popup)
-        api.addPanel({
-          id: "detail",
-          component: "detail",
-          title: pos.issuer,
-          params: {
-            position: pos,
-            onClose: () => {
-              setSelectedPosition(null);
-              const panel = dockviewApiRef.current?.getPanel("detail");
-              if (panel) dockviewApiRef.current?.removePanel(panel);
-            },
-            onTrade: () =>
-              openOrderTicket({
-                cusip: pos.cusip,
-                issuer: pos.issuer,
-              }),
-            onPriceClick: (price: number, side: "BUY" | "SELL") =>
-              openOrderTicket({
-                cusip: pos.cusip,
-                issuer: pos.issuer,
-                side,
-                limitPrice: price,
-              }),
-          },
-          floating: { width: 380, height: 500, x: 100, y: 50 },
-        });
-      }
     },
-    [openOrderTicket]
-  );
-
-  const components = useMemo(
-    () => ({
-      positions: PositionsPanel,
-      activity: ActivityPanel,
-      detail: DetailPanel,
-    }),
     []
   );
 
-  const onReady = useCallback(
-    (event: DockviewReadyEvent) => {
-      const api = event.api;
-      dockviewApiRef.current = api;
+  const handleCloseDetail = useCallback(() => {
+    setSelectedPosition(null);
+  }, []);
 
-      // 1. Positions blotter (main center)
-      const posPanel = api.addPanel({
-        id: "positions",
-        component: "positions",
-        title: "Positions Blotter",
-        params: {
-          onRowClick: (pos: Position) => showDetailPanel(pos),
-        },
+  const handleTradeFromDetail = useCallback(() => {
+    if (!selectedPosition) return;
+    openOrderTicket({
+      cusip: selectedPosition.cusip,
+      issuer: selectedPosition.issuer,
+    });
+  }, [selectedPosition, openOrderTicket]);
+
+  const handlePriceClick = useCallback(
+    (price: number, side: "BUY" | "SELL") => {
+      if (!selectedPosition) return;
+      openOrderTicket({
+        cusip: selectedPosition.cusip,
+        issuer: selectedPosition.issuer,
+        side,
+        limitPrice: price,
       });
-
-      // 2. Activity panel (below positions, ~40% height)
-      const actPanel = api.addPanel({
-        id: "activity",
-        component: "activity",
-        title: "Activity",
-        params: { orders },
-        position: { direction: "below" as const, referencePanel: posPanel },
-        initialHeight: 300,
-      });
-
-      // Lock groups so panels are not closable / draggable
-      posPanel.group.locked = true;
-      actPanel.group.locked = true;
     },
-    [orders, showDetailPanel]
+    [selectedPosition, openOrderTicket]
   );
 
+  // Compute KPI values
+  const totalNotional = positions.reduce((s, p) => s + p.notional, 0);
+  const totalMktValue = positions.reduce((s, p) => s + p.mktValue, 0);
+  const totalPnl = positions.reduce((s, p) => s + p.pnl, 0);
+  const totalDv01 = positions.reduce((s, p) => s + p.dv01, 0);
+
+  // Filtered positions
+  const filteredPositions = useMemo(() => {
+    if (positionFilter === "All") return positions;
+    if (positionFilter === "IG") return positions.filter((p) => IG_RATINGS.has(p.rating));
+    if (positionFilter === "HY") return positions.filter((p) => !IG_RATINGS.has(p.rating) && p.sector !== "Government");
+    return positions.filter((p) => p.sector === "Government");
+  }, [positionFilter]);
+
+  // Sector allocation
+  const sectorAllocation = useMemo(() => {
+    const sectorMap = new Map<string, number>();
+    for (const p of positions) {
+      sectorMap.set(p.sector, (sectorMap.get(p.sector) ?? 0) + p.notional);
+    }
+    const entries = Array.from(sectorMap.entries()).sort((a, b) => b[1] - a[1]);
+    const total = entries.reduce((s, [, v]) => s + v, 0);
+    return entries.map(([sector, value]) => ({
+      sector,
+      pct: (value / total) * 100,
+      color: SECTOR_COLORS[sector] ?? "#6b7280",
+    }));
+  }, []);
+
+  // Short sector labels
+  const sectorShortLabels: Record<string, string> = {
+    Financials: "Fins",
+    Technology: "Tech",
+    Government: "Govt",
+    Healthcare: "Health",
+    Industrials: "Indus",
+    Consumer: "Cons",
+    Media: "Media",
+    Energy: "Energy",
+  };
+
+  // P&L breakdown: top 6 issuers by abs P&L
+  const pnlBreakdown = useMemo(() => {
+    return [...positions]
+      .sort((a, b) => Math.abs(b.pnl) - Math.abs(a.pnl))
+      .slice(0, 6)
+      .map((p) => ({
+        issuer: p.issuer.split(" ")[0],
+        pnl: p.pnl,
+        absPnl: Math.abs(p.pnl),
+      }));
+  }, []);
+
+  const maxAbsPnl = Math.max(...pnlBreakdown.map((p) => p.absPnl));
+
+  // Suppress unused lint for pnlTab
+  void pnlTab;
+
   return (
-    <div className="flex flex-col" style={{ height: "calc(100vh - 56px)" }}>
-      {/* Page Header — clean toolbar row */}
-      <div className="flex items-center justify-between px-4 py-2 shrink-0 border-b bg-background">
-        <div className="flex items-center gap-3">
-          <h2 className="text-lg font-semibold tracking-tight">Fixed Income Trading</h2>
-          {/* Live status pill */}
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card px-2 py-0.5">
-            <span
-              className="h-1.5 w-1.5 rounded-full"
-              style={{
-                background: CLR_SUCCESS,
-                boxShadow: `0 0 4px ${CLR_SUCCESS}`,
-                animation: "pulse 2s ease-in-out infinite",
-              }}
-            />
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Live</span>
+    <div
+      style={{
+        height: "calc(100vh - 48px)",
+        display: "flex",
+        flexDirection: "column",
+        background: "hsl(var(--background))",
+        overflow: "hidden",
+      }}
+    >
+      {/* ── 1. Portfolio Summary Strip ── */}
+      <div
+        style={{
+          display: "flex",
+          gap: 8,
+          padding: "8px 12px",
+          borderBottom: "1px solid hsl(var(--border))",
+          minHeight: 120,
+          maxHeight: 120,
+          alignItems: "stretch",
+        }}
+      >
+        {/* KPI Card: Total Notional */}
+        <div
+          style={{
+            flex: 1,
+            background: "hsl(var(--card))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: 6,
+            borderTop: "2px solid #22c55e",
+            padding: "10px 12px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            position: "relative",
+          }}
+        >
+          <DollarSign
+            className="text-muted-foreground"
+            style={{ position: "absolute", top: 8, right: 8, width: 14, height: 14, opacity: 0.5 }}
+          />
+          <span
+            style={{
+              fontSize: 10,
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              color: "hsl(var(--muted-foreground))",
+            }}
+          >
+            Total Notional
           </span>
-          <span className="text-[10px] text-muted-foreground font-mono" style={TABNUM}>
-            As of 15:42:31 ET
+          <span style={{ fontSize: 24, fontWeight: 700, ...MONO }}>{formatCurrency(totalNotional)}</span>
+          <span style={{ fontSize: 11, color: "hsl(var(--muted-foreground))" }}>
+            {positions.length} positions
           </span>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-7 text-xs gap-1"
-          onClick={() => openOrderTicket()}
+
+        {/* KPI Card: Market Value */}
+        <div
+          style={{
+            flex: 1,
+            background: "hsl(var(--card))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: 6,
+            padding: "10px 12px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            position: "relative",
+          }}
         >
-          <Plus className="h-3 w-3" />
-          Order
-        </Button>
+          <BarChart3
+            className="text-muted-foreground"
+            style={{ position: "absolute", top: 8, right: 8, width: 14, height: 14, opacity: 0.5 }}
+          />
+          <span
+            style={{
+              fontSize: 10,
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              color: "hsl(var(--muted-foreground))",
+            }}
+          >
+            Market Value
+          </span>
+          <span style={{ fontSize: 24, fontWeight: 700, ...MONO }}>{formatCurrency(totalMktValue)}</span>
+          <span style={{ fontSize: 11, color: "hsl(var(--muted-foreground))" }}>Mark-to-market</span>
+        </div>
+
+        {/* KPI Card: Total P&L */}
+        <div
+          style={{
+            flex: 1,
+            background: "hsl(var(--card))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: 6,
+            borderTop: `2px solid ${CLR_DANGER}`,
+            padding: "10px 12px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            position: "relative",
+          }}
+        >
+          <TrendingDown
+            className="text-muted-foreground"
+            style={{ position: "absolute", top: 8, right: 8, width: 14, height: 14, opacity: 0.5 }}
+          />
+          <span
+            style={{
+              fontSize: 10,
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              color: "hsl(var(--muted-foreground))",
+            }}
+          >
+            Total P&L
+          </span>
+          <span
+            style={{
+              fontSize: 24,
+              fontWeight: 700,
+              ...MONO,
+              color: totalPnl >= 0 ? CLR_SUCCESS : CLR_DANGER,
+            }}
+          >
+            {formatPnl(totalPnl)}
+          </span>
+          <span style={{ fontSize: 11, color: "hsl(var(--muted-foreground))" }}>
+            {((totalPnl / totalNotional) * 100).toFixed(2)}% unrealized
+          </span>
+        </div>
+
+        {/* KPI Card: Portfolio Risk */}
+        <div
+          style={{
+            flex: 1,
+            background: "hsl(var(--card))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: 6,
+            borderTop: "2px solid #eab308",
+            padding: "10px 12px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            position: "relative",
+          }}
+        >
+          <AlertTriangle
+            className="text-muted-foreground"
+            style={{ position: "absolute", top: 8, right: 8, width: 14, height: 14, opacity: 0.5 }}
+          />
+          <span
+            style={{
+              fontSize: 10,
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              color: "hsl(var(--muted-foreground))",
+            }}
+          >
+            Portfolio Risk
+          </span>
+          <span style={{ fontSize: 24, fontWeight: 700, ...MONO }}>
+            ${formatNumber(totalDv01)}
+          </span>
+          <span style={{ fontSize: 11, color: "hsl(var(--muted-foreground))" }}>
+            Dollar value of 1bp
+          </span>
+          <span style={{ fontSize: 9, color: "hsl(var(--muted-foreground))", marginTop: -2, letterSpacing: "0.05em" }}>
+            DV01
+          </span>
+        </div>
+
+        {/* P&L Breakdown mini section */}
+        <div
+          style={{
+            width: 220,
+            minWidth: 220,
+            background: "hsl(var(--card))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: 6,
+            padding: "6px 10px",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
+        >
+          {/* Tiny pill tabs */}
+          <div style={{ display: "flex", gap: 2, marginBottom: 4 }}>
+            {(["pnl", "dur", "yld", "risk"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setPnlTab(tab)}
+                style={{
+                  fontSize: 9,
+                  fontWeight: 600,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  padding: "2px 6px",
+                  borderRadius: 9999,
+                  border: "none",
+                  cursor: "pointer",
+                  background: pnlTab === tab ? "hsl(var(--mdl-success) / 0.15)" : "transparent",
+                  color: pnlTab === tab ? CLR_SUCCESS : "hsl(var(--muted-foreground))",
+                }}
+              >
+                {tab === "pnl" ? "P&L" : tab.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          {/* Top issuers with bars */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 1, flex: 1 }}>
+            {pnlBreakdown.map((item) => (
+              <div
+                key={item.issuer}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  fontSize: 10,
+                }}
+              >
+                <span
+                  style={{
+                    width: 42,
+                    flexShrink: 0,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    color: "hsl(var(--muted-foreground))",
+                  }}
+                >
+                  {item.issuer}
+                </span>
+                <div
+                  style={{
+                    flex: 1,
+                    height: 4,
+                    borderRadius: 2,
+                    background: "hsl(var(--border))",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${(item.absPnl / maxAbsPnl) * 100}%`,
+                      height: "100%",
+                      borderRadius: 2,
+                      background: item.pnl >= 0 ? CLR_SUCCESS : CLR_DANGER,
+                    }}
+                  />
+                </div>
+                <span
+                  style={{
+                    ...MONO,
+                    fontSize: 10,
+                    fontWeight: 500,
+                    whiteSpace: "nowrap",
+                    color: item.pnl >= 0 ? CLR_SUCCESS : CLR_DANGER,
+                  }}
+                >
+                  {formatPnlK(item.pnl)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Pulse animation keyframe */}
-      <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}`}</style>
+      {/* ── 2. Sector Allocation Bar ── */}
+      <div
+        style={{
+          padding: "4px 12px 6px",
+          borderBottom: "1px solid hsl(var(--border))",
+          minHeight: 40,
+          maxHeight: 40,
+        }}
+      >
+        <span
+          style={{
+            fontSize: 10,
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            color: "hsl(var(--muted-foreground))",
+            fontWeight: 600,
+          }}
+        >
+          Sector Allocation
+        </span>
+        {/* Thin stacked bar */}
+        <div
+          style={{
+            display: "flex",
+            height: 4,
+            borderRadius: 2,
+            overflow: "hidden",
+            marginTop: 3,
+            marginBottom: 3,
+          }}
+        >
+          {sectorAllocation.map((s) => (
+            <div
+              key={s.sector}
+              style={{
+                width: `${s.pct}%`,
+                background: s.color,
+              }}
+            />
+          ))}
+        </div>
+        {/* Inline legend */}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          {sectorAllocation.map((s) => (
+            <span
+              key={s.sector}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 3,
+                fontSize: 10,
+                color: "hsl(var(--muted-foreground))",
+              }}
+            >
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: s.color,
+                  flexShrink: 0,
+                }}
+              />
+              {sectorShortLabels[s.sector] ?? s.sector} {s.pct.toFixed(1)}%
+            </span>
+          ))}
+        </div>
+      </div>
 
-      {/* Order Ticket Dialog (modal overlay, not a dockview panel) */}
+      {/* ── 3+4+5: Main content area ── */}
+      <div style={{ flex: 1, display: "flex", overflow: "hidden", minHeight: 0 }}>
+        {/* Left side: Positions + Activity */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
+          {/* Positions Section */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 0 }}>
+            {/* Positions Header */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "4px 12px",
+                minHeight: 32,
+                maxHeight: 32,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  Positions
+                </span>
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    background: "hsl(var(--mdl-success) / 0.15)",
+                    color: CLR_SUCCESS,
+                    borderRadius: 9999,
+                    padding: "1px 6px",
+                    ...MONO,
+                  }}
+                >
+                  {filteredPositions.length}
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: 2 }}>
+                {(["All", "IG", "HY", "GOVT"] as const).map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setPositionFilter(f)}
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      padding: "2px 8px",
+                      borderRadius: 9999,
+                      border: "none",
+                      cursor: "pointer",
+                      background: positionFilter === f ? "hsl(var(--mdl-success) / 0.15)" : "transparent",
+                      color: positionFilter === f ? CLR_SUCCESS : "hsl(var(--muted-foreground))",
+                    }}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Positions AG Grid */}
+            <div style={{ flex: 1, overflow: "hidden", borderBottom: "1px solid hsl(var(--border))" }}>
+              <AgGridReact<Position>
+                theme={marketsGridTheme}
+                rowData={filteredPositions}
+                columnDefs={positionColDefs}
+                defaultColDef={defaultColDef}
+                rowHeight={28}
+                headerHeight={30}
+                animateRows={true}
+                rowSelection="single"
+                onRowClicked={(event) => {
+                  if (event.data) handlePositionClick(event.data);
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Activity Panel */}
+          <div
+            style={{
+              height: "40%",
+              minHeight: 150,
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <Tabs defaultValue="trades" className="flex flex-col h-full">
+              <TabsList className="h-6 mx-1 mt-1 w-fit shrink-0">
+                <TabsTrigger value="trades" className="text-[11px] h-5 px-2 gap-1">
+                  Trades
+                  <span className="text-[9px] font-mono rounded-full bg-muted px-1 py-px" style={TABNUM}>
+                    {trades.length}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="rfqs" className="text-[11px] h-5 px-2 gap-1">
+                  RFQs
+                  <span className="text-[9px] font-mono rounded-full bg-muted px-1 py-px" style={TABNUM}>
+                    {rfqs.length}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="orders" className="text-[11px] h-5 px-2 gap-1">
+                  Orders
+                  <span className="text-[9px] font-mono rounded-full bg-muted px-1 py-px" style={TABNUM}>
+                    {orders.length}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="risk" className="text-[11px] h-5 px-2 gap-1">
+                  Risk
+                  <span className="text-[9px] font-mono rounded-full bg-muted px-1 py-px" style={TABNUM}>
+                    {riskData.length}
+                  </span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="trades" className="flex-1 mt-0 overflow-hidden">
+                <div className="h-full w-full">
+                  <AgGridReact<Trade>
+                    theme={marketsGridTheme}
+                    rowData={trades}
+                    columnDefs={tradeColDefs}
+                    defaultColDef={defaultColDef}
+                    rowHeight={24}
+                    headerHeight={26}
+                    animateRows={true}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="rfqs" className="flex-1 mt-0 overflow-hidden">
+                <div className="h-full w-full">
+                  <AgGridReact<RFQ>
+                    theme={marketsGridTheme}
+                    rowData={rfqs}
+                    columnDefs={rfqColDefs}
+                    defaultColDef={defaultColDef}
+                    rowHeight={24}
+                    headerHeight={26}
+                    animateRows={true}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="orders" className="flex-1 mt-0 overflow-hidden">
+                <div className="h-full w-full">
+                  <AgGridReact<Order>
+                    theme={marketsGridTheme}
+                    rowData={orders}
+                    columnDefs={orderColDefs}
+                    defaultColDef={defaultColDef}
+                    rowHeight={24}
+                    headerHeight={26}
+                    animateRows={true}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="risk" className="flex-1 mt-0 overflow-hidden">
+                <div className="h-full w-full">
+                  <AgGridReact<Risk>
+                    theme={marketsGridTheme}
+                    rowData={riskData}
+                    columnDefs={riskColDefs}
+                    defaultColDef={defaultColDef}
+                    rowHeight={24}
+                    headerHeight={26}
+                    animateRows={true}
+                  />
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+
+        {/* ── 5. Detail Panel (right, 340px) ── */}
+        {selectedPosition && (
+          <div
+            style={{
+              width: 340,
+              minWidth: 340,
+              maxWidth: 340,
+              borderLeft: "1px solid hsl(var(--border))",
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+              background: "hsl(var(--background))",
+            }}
+          >
+            {/* Detail header */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "8px 12px",
+                borderBottom: "1px solid hsl(var(--border))",
+                minHeight: 44,
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {selectedPosition.issuer}
+                </div>
+                <div style={{ fontSize: 12, color: "hsl(var(--muted-foreground))", ...MONO }}>
+                  {selectedPosition.description}
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" onClick={handleCloseDetail} className="h-6 w-6 shrink-0">
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+
+            {/* P&L Hero Card */}
+            <div
+              style={{
+                margin: "8px 12px",
+                borderRadius: 8,
+                padding: "12px 14px",
+                background: selectedPosition.pnl >= 0
+                  ? "linear-gradient(135deg, hsl(var(--mdl-success) / 0.12), hsl(var(--mdl-success) / 0.04))"
+                  : "linear-gradient(135deg, hsl(var(--mdl-destructive) / 0.12), hsl(var(--mdl-destructive) / 0.04))",
+              }}
+            >
+              <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: "hsl(var(--muted-foreground))", marginBottom: 4 }}>
+                Unrealized P&L
+              </p>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                <span
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 700,
+                    ...MONO,
+                    color: selectedPosition.pnl >= 0 ? CLR_SUCCESS : CLR_DANGER,
+                  }}
+                >
+                  {formatPnl(selectedPosition.pnl)}
+                </span>
+                <span
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 600,
+                    ...MONO,
+                    color: selectedPosition.pnl >= 0 ? CLR_SUCCESS : CLR_DANGER,
+                  }}
+                >
+                  {((selectedPosition.pnl / selectedPosition.notional) * 100).toFixed(2)}%
+                </span>
+              </div>
+            </div>
+
+            {/* Metrics Grid */}
+            <div
+              style={{
+                flex: 1,
+                overflow: "auto",
+                padding: "0 12px 8px",
+              }}
+            >
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "8px 16px",
+                }}
+              >
+                {([
+                  ["CUSIP", selectedPosition.cusip],
+                  ["Side", null],
+                  ["Coupon", selectedPosition.coupon.toFixed(3) + "%"],
+                  ["Maturity", selectedPosition.maturity],
+                  ["Rating", null],
+                  ["Sector", selectedPosition.sector],
+                  ["Notional", formatCurrency(selectedPosition.notional)],
+                  ["Price", selectedPosition.price.toFixed(2)],
+                  ["Mkt Value", formatCurrency(selectedPosition.mktValue)],
+                  ["Yield", selectedPosition.yield.toFixed(2) + "%"],
+                  ["Duration", selectedPosition.duration.toFixed(1)],
+                  ["DV01", "$" + formatNumber(selectedPosition.dv01)],
+                ] as const).map(([label, value]) => (
+                  <div key={label}>
+                    <p style={{ fontSize: 10, color: "hsl(var(--muted-foreground))", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 2 }}>
+                      {label}
+                    </p>
+                    {label === "Side" ? (
+                      <span
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 700,
+                          ...MONO,
+                          color: selectedPosition.side === "LONG" ? CLR_SUCCESS : CLR_DANGER,
+                        }}
+                      >
+                        {selectedPosition.side}
+                      </span>
+                    ) : label === "Rating" ? (
+                      <span style={{ fontSize: 13, fontWeight: 700, color: getRatingColor(selectedPosition.rating), ...MONO }}>
+                        {selectedPosition.rating}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 13, fontWeight: 700, ...MONO }}>{value}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Bottom: Trade button + Ladder toggle */}
+            <div
+              style={{
+                borderTop: "1px solid hsl(var(--border))",
+                padding: "8px 12px",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <Button
+                size="sm"
+                className="h-7 text-[11px] px-4 font-semibold flex-1"
+                style={{ background: CLR_SUCCESS, color: "#fff" }}
+                onClick={handleTradeFromDetail}
+              >
+                Trade
+              </Button>
+              <div style={{ display: "flex", gap: 2 }}>
+                <button
+                  type="button"
+                  onClick={() => setDetailTab("details")}
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    padding: "3px 8px",
+                    borderRadius: 4,
+                    border: "none",
+                    cursor: "pointer",
+                    background: detailTab === "details" ? "hsl(var(--accent))" : "transparent",
+                    color: detailTab === "details" ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))",
+                  }}
+                >
+                  Details
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDetailTab("ladder")}
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    padding: "3px 8px",
+                    borderRadius: 4,
+                    border: "none",
+                    cursor: "pointer",
+                    background: detailTab === "ladder" ? "hsl(var(--accent))" : "transparent",
+                    color: detailTab === "ladder" ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))",
+                  }}
+                >
+                  Ladder
+                </button>
+              </div>
+            </div>
+
+            {/* Ladder view (when ladder tab selected) */}
+            {detailTab === "ladder" && (
+              <div style={{ flex: 1, overflow: "hidden", borderTop: "1px solid hsl(var(--border))" }}>
+                <PriceLadder
+                  position={selectedPosition}
+                  onPriceClick={handlePriceClick}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Order Ticket Dialog */}
       <OrderTicketDialog
         open={orderTicketOpen}
         onOpenChange={setOrderTicketOpen}
         prefill={orderPrefill}
         onSubmit={handleOrderSubmit}
       />
-
-      {/* Portfolio Summary — static header, NOT in dockview */}
-      <div className="px-4 py-2 space-y-2 shrink-0 border-b border-border">
-        <PortfolioSummary />
-        <SectorAllocationBar />
-      </div>
-
-      {/* Dockview container — fills remaining height */}
-      <div className="flex-1 min-h-0">
-        <DockviewReact
-          className="dockview-theme-abyss"
-          onReady={onReady}
-          components={components}
-        />
-      </div>
     </div>
   );
 }
