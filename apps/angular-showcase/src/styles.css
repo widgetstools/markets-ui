@@ -473,6 +473,327 @@ textarea.p-textarea:focus {
   padding: 2px 10px !important;
 }
 
+/* ── Tabs (p-tabs / p-tablist / p-tabpanels) ── */
+.p-tabs {
+  background: transparent !important;
+}
+.p-tablist {
+  background: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+.p-tablist .p-tab {
+  background: transparent !important;
+  color: hsl(var(--muted-foreground)) !important;
+  border-color: transparent !important;
+}
+.p-tablist .p-tab:hover {
+  color: hsl(var(--foreground)) !important;
+}
+.p-tablist .p-tab.p-tab-active,
+.p-tablist .p-tab[data-p-active="true"] {
+  color: hsl(var(--foreground)) !important;
+  border-color: hsl(var(--primary)) !important;
+}
+.p-tabpanels {
+  background: hsl(var(--card)) !important;
+  color: hsl(var(--card-foreground)) !important;
+}
+.p-tabpanel {
+  color: hsl(var(--card-foreground)) !important;
+}
+.p-tab-ink-bar {
+  background: hsl(var(--primary)) !important;
+}
+
+/* ── Breadcrumb ── */
+.p-breadcrumb {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: calc(var(--mdl-radius, 0.5rem) - 2px) !important;
+  padding: 10px 16px !important;
+}
+.p-breadcrumb .p-breadcrumb-item-link {
+  color: hsl(var(--muted-foreground)) !important;
+}
+.p-breadcrumb .p-breadcrumb-item-link:hover {
+  color: hsl(var(--foreground)) !important;
+}
+.p-breadcrumb .p-menuitem-text {
+  color: hsl(var(--foreground)) !important;
+}
+.p-breadcrumb .p-breadcrumb-separator {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* ── Fieldset / Collapsible ── */
+.p-fieldset {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: calc(var(--mdl-radius, 0.5rem)) !important;
+  color: hsl(var(--card-foreground)) !important;
+}
+.p-fieldset .p-fieldset-legend {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: calc(var(--mdl-radius, 0.5rem) - 2px) !important;
+  color: hsl(var(--foreground)) !important;
+  padding: 8px 16px !important;
+}
+.p-fieldset .p-fieldset-content {
+  color: hsl(var(--card-foreground)) !important;
+}
+.p-fieldset .p-fieldset-toggle-icon {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* ── Menubar ── */
+.p-menubar {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: calc(var(--mdl-radius, 0.5rem) - 2px) !important;
+  color: hsl(var(--foreground)) !important;
+  padding: 4px 8px !important;
+}
+.p-menubar .p-menubar-item-link {
+  color: hsl(var(--foreground)) !important;
+}
+.p-menubar .p-menubar-item-link:hover {
+  background: hsl(var(--secondary)) !important;
+}
+.p-menubar .p-menubar-submenu {
+  background: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: calc(var(--mdl-radius, 0.5rem) - 2px) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+}
+.p-menubar .p-menubar-submenu .p-menubar-item-link {
+  color: hsl(var(--popover-foreground)) !important;
+}
+.p-menubar .p-menubar-submenu .p-menubar-item-link:hover {
+  background: hsl(var(--secondary)) !important;
+}
+
+/* ── Paginator ── */
+.p-paginator {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: calc(var(--mdl-radius, 0.5rem) - 2px) !important;
+  color: hsl(var(--foreground)) !important;
+}
+.p-paginator .p-paginator-page,
+.p-paginator .p-paginator-first,
+.p-paginator .p-paginator-prev,
+.p-paginator .p-paginator-next,
+.p-paginator .p-paginator-last {
+  color: hsl(var(--muted-foreground)) !important;
+  background: transparent !important;
+  border: none !important;
+}
+.p-paginator .p-paginator-page:hover,
+.p-paginator .p-paginator-first:hover,
+.p-paginator .p-paginator-prev:hover,
+.p-paginator .p-paginator-next:hover,
+.p-paginator .p-paginator-last:hover {
+  background: hsl(var(--secondary)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+.p-paginator .p-paginator-page.p-paginator-page-selected,
+.p-paginator .p-paginator-page.p-highlight {
+  background: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+.p-paginator .p-paginator-rpp-dropdown {
+  background: transparent !important;
+  border-color: hsl(var(--input)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* ── Splitter ── */
+.p-splitter {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: calc(var(--mdl-radius, 0.5rem)) !important;
+}
+.p-splitter-panel {
+  background: transparent !important;
+}
+.p-splitter-gutter {
+  background: hsl(var(--secondary)) !important;
+}
+.p-splitter-gutter-handle {
+  background: hsl(var(--muted-foreground)) !important;
+}
+
+/* ── Context Menu ── */
+.p-contextmenu {
+  background: hsl(var(--popover)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: calc(var(--mdl-radius, 0.5rem) - 2px) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+  padding: 4px !important;
+}
+.p-contextmenu .p-menuitem-link {
+  color: hsl(var(--popover-foreground)) !important;
+  border-radius: 4px !important;
+  padding: 8px 12px !important;
+}
+.p-contextmenu .p-menuitem-link:hover {
+  background: hsl(var(--secondary)) !important;
+}
+.p-contextmenu .p-menu-separator {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* ── Drawer / Sidebar ── */
+.p-drawer {
+  background: hsl(var(--card)) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--card-foreground)) !important;
+}
+.p-drawer .p-drawer-header {
+  background: transparent !important;
+  color: hsl(var(--foreground)) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+}
+.p-drawer .p-drawer-content {
+  background: transparent !important;
+  color: hsl(var(--card-foreground)) !important;
+}
+.p-drawer .p-drawer-footer {
+  border-top: 1px solid hsl(var(--border)) !important;
+}
+.p-drawer-mask {
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ── Dialog ── */
+.p-dialog {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: calc(var(--mdl-radius, 0.5rem)) !important;
+  color: hsl(var(--card-foreground)) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+}
+.p-dialog .p-dialog-header {
+  background: transparent !important;
+  color: hsl(var(--foreground)) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+  padding: 16px 24px !important;
+}
+.p-dialog .p-dialog-content {
+  background: transparent !important;
+  color: hsl(var(--card-foreground)) !important;
+  padding: 16px 24px !important;
+}
+.p-dialog .p-dialog-footer {
+  background: transparent !important;
+  border-top: 1px solid hsl(var(--border)) !important;
+  padding: 12px 24px !important;
+}
+.p-dialog .p-dialog-header-close {
+  color: hsl(var(--muted-foreground)) !important;
+}
+.p-dialog .p-dialog-header-close:hover {
+  background: hsl(var(--secondary)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+.p-dialog-mask {
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ── InputNumber ── */
+.p-inputnumber .p-inputnumber-input {
+  background: transparent !important;
+  border-color: hsl(var(--input)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+.p-inputnumber .p-inputnumber-button {
+  background: hsl(var(--secondary)) !important;
+  border-color: hsl(var(--input)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+.p-inputnumber .p-inputnumber-button:hover {
+  background: hsl(var(--accent)) !important;
+}
+
+/* ── InputGroup ── */
+.p-inputgroup-addon,
+.p-inputgroupaddon {
+  background: hsl(var(--secondary)) !important;
+  border-color: hsl(var(--input)) !important;
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* ── Toast ── */
+.p-toast .p-toast-message {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: calc(var(--mdl-radius, 0.5rem)) !important;
+  color: hsl(var(--card-foreground)) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+}
+.p-toast .p-toast-message-success {
+  border-left: 4px solid hsl(var(--mdl-success)) !important;
+}
+.p-toast .p-toast-message-error {
+  border-left: 4px solid hsl(var(--destructive)) !important;
+}
+.p-toast .p-toast-message-info {
+  border-left: 4px solid hsl(var(--primary)) !important;
+}
+.p-toast .p-toast-summary {
+  color: hsl(var(--foreground)) !important;
+}
+.p-toast .p-toast-detail {
+  color: hsl(var(--muted-foreground)) !important;
+}
+.p-toast .p-toast-close-button {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* ── Carousel ── */
+.p-carousel {
+  background: transparent !important;
+}
+.p-carousel .p-carousel-prev,
+.p-carousel .p-carousel-next {
+  color: hsl(var(--muted-foreground)) !important;
+  background: transparent !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 50% !important;
+}
+.p-carousel .p-carousel-prev:hover,
+.p-carousel .p-carousel-next:hover {
+  background: hsl(var(--secondary)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+.p-carousel .p-carousel-indicators .p-carousel-indicator button {
+  background: hsl(var(--muted-foreground)) !important;
+}
+.p-carousel .p-carousel-indicators .p-carousel-indicator.p-highlight button {
+  background: hsl(var(--primary)) !important;
+}
+
+/* ── Tag (secondary variant fix) ── */
+.p-tag.p-tag-secondary {
+  background: hsl(var(--secondary)) !important;
+  color: hsl(var(--secondary-foreground)) !important;
+}
+
+/* ── Tooltip ── */
+.p-tooltip .p-tooltip-text {
+  background: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: calc(var(--mdl-radius, 0.5rem) - 2px) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+  font-size: 13px !important;
+}
+.p-tooltip .p-tooltip-arrow {
+  display: none !important;
+}
+
 /* ── Utility classes for trading colors ── */
 .font-mono { font-family: var(--mdl-font-mono, 'JetBrains Mono', monospace); }
 

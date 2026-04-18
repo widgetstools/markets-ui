@@ -27,12 +27,14 @@ import { ButtonModule } from 'primeng/button';
     </header>
 
     <!-- Routed content -->
-    <main class="mx-auto max-w-7xl px-6 py-8">
-      <router-outlet />
+    <main class="flex-1 min-h-0 overflow-auto">
+      <div class="mx-auto max-w-7xl px-6 py-8">
+        <router-outlet />
+      </div>
     </main>
   `,
   styles: [`
-    :host { display: block; min-height: 100vh; }
+    :host { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
     .nav-link {
       font-size: 14px;

@@ -4,8 +4,8 @@
  * All color values use HSL channel format (no hsl() wrapper)
  * so Tailwind can compose alpha: hsl(var(--mdl-background) / 0.5)
  *
- * Inspired by Binance's trading platform layout — true black backgrounds,
- * warm dark surfaces, professional monospace numbers.
+ * Inspired by Bloomberg / Trumid — navy-black backgrounds,
+ * institutional dark surfaces, professional monospace numbers.
  * Accent: vibrant teal (#1DA898 light / #21B8A4 dark) — stands out on
  * both light and dark backgrounds without conflicting with green (profit)
  * or blue (bid) trading colors.
@@ -44,39 +44,39 @@
   --mdl-radius-xl: 18px;
 
   /* ── Colors (HSL channels) — Light theme ──
-     Clean white/gray palette with teal accent.
-     Teal stands out on both light and dark backgrounds
-     without conflicting with green (profit) or blue (bid). */
-  --mdl-background: 0 0% 100%;
-  --mdl-foreground: 225 18% 10%;          /* #181A20 */
-  --mdl-card: 0 0% 100%;
-  --mdl-card-foreground: 225 18% 10%;
+     Warm off-white palette — easy on the eyes for extended sessions.
+     Reduced contrast (~15:1) vs pure white/black to prevent eye strain.
+     Teal accent stands out without conflicting with green/blue. */
+  --mdl-background: 220 14% 97%;          /* #F7F8FA — warm off-white */
+  --mdl-foreground: 220 16% 12%;          /* #181C24 — softened dark */
+  --mdl-card: 0 0% 100%;                  /* #FFFFFF — cards stay white */
+  --mdl-card-foreground: 220 16% 12%;
   --mdl-popover: 0 0% 100%;
-  --mdl-popover-foreground: 225 18% 10%;
-  --mdl-primary: 174 72% 40%;             /* #1DA898 — teal, darker for light bg */
-  --mdl-primary-foreground: 0 0% 100%;    /* White text on teal */
-  --mdl-secondary: 220 9% 96%;            /* #F5F5F5 */
-  --mdl-secondary-foreground: 225 18% 10%;
-  --mdl-muted: 220 9% 96%;
-  --mdl-muted-foreground: 218 11% 52%;    /* #848E9C */
-  --mdl-accent: 220 9% 96%;              /* Neutral hover state */
-  --mdl-accent-foreground: 225 18% 10%;
-  --mdl-brand: 174 72% 40%;              /* Teal brand accent */
+  --mdl-popover-foreground: 220 16% 12%;
+  --mdl-primary: 174 72% 38%;             /* #17957E — slightly deeper for readability */
+  --mdl-primary-foreground: 0 0% 100%;
+  --mdl-secondary: 220 14% 95%;           /* #F0F2F5 — cooler secondary */
+  --mdl-secondary-foreground: 220 16% 12%;
+  --mdl-muted: 220 14% 95%;
+  --mdl-muted-foreground: 218 10% 46%;    /* #6B7280 — readable muted text */
+  --mdl-accent: 220 14% 93%;              /* #ECEEF2 — subtle hover */
+  --mdl-accent-foreground: 220 16% 12%;
+  --mdl-brand: 174 72% 38%;              /* Teal brand accent */
   --mdl-brand-foreground: 0 0% 100%;
-  --mdl-destructive: 350 89% 60%;         /* #F6465D */
+  --mdl-destructive: 350 80% 52%;         /* #D93651 — slightly muted red */
   --mdl-destructive-foreground: 0 0% 100%;
-  --mdl-success: 158 68% 44%;             /* #0ECB81 — green (distinct from teal) */
-  --mdl-border: 220 9% 90%;
-  --mdl-input: 220 9% 90%;
-  --mdl-ring: 174 72% 40%;               /* Focus ring = teal */
+  --mdl-success: 160 72% 34%;             /* #16A367 — deeper green for readability */
+  --mdl-border: 220 12% 90%;              /* #E4E7EC — soft border */
+  --mdl-input: 220 12% 90%;
+  --mdl-ring: 174 72% 38%;               /* Focus ring = teal */
 
   /* ── Trading Semantic ── */
-  --mdl-bid: 210 100% 45%;               /* Blue — bid price */
-  --mdl-ask: 350 89% 60%;                /* Red — ask price (Binance red) */
-  --mdl-flash-up: 158 68% 44%;           /* #0ECB81 — price tick up */
-  --mdl-flash-down: 350 89% 60%;         /* #F6465D — price tick down */
-  --mdl-pnl-positive: 158 68% 38%;       /* Green — profit (slightly darker for text) */
-  --mdl-pnl-negative: 350 89% 50%;       /* Red — loss */
+  --mdl-bid: 210 90% 42%;                /* #0B5FAD — deeper blue for readability */
+  --mdl-ask: 350 80% 52%;                /* #D93651 — muted red */
+  --mdl-flash-up: 160 72% 34%;           /* #16A367 — deeper green */
+  --mdl-flash-down: 350 80% 52%;         /* #D93651 — muted red */
+  --mdl-pnl-positive: 160 72% 30%;       /* #0E8C54 — darker for text readability */
+  --mdl-pnl-negative: 350 80% 46%;       /* #C42E47 — darker for text readability */
 
   /* ── Shadcn backward compatibility aliases ──
      Existing shadcn components reference unprefixed vars.
@@ -107,39 +107,90 @@
 }
 
 /* ─── Dark Theme ───────────────────────────────────────────────────── */
-/* thinkorswim / Schwab-inspired dark palette.
-   Very dark neutral backgrounds, warm grays, teal brand accent.
-   Trading green (#26A69A) and pink-red (#EF5350) for buy/sell signals. */
+/* Bloomberg / Trumid-inspired navy-black palette.
+   Deep dark canvas with subtle blue undertone, teal brand accent.
+   Trading green (#10B981) and rose-red (#F43F5E) for buy/sell signals. */
 .dark,
 [data-theme="dark"] {
-  --mdl-background: 0 0% 7%;              /* #121212 — very dark */
-  --mdl-foreground: 0 0% 100%;            /* #FFFFFF — white text */
-  --mdl-card: 0 0% 12%;                   /* #1E1E1E — card surface */
-  --mdl-card-foreground: 0 0% 100%;
-  --mdl-popover: 0 0% 12%;
-  --mdl-popover-foreground: 0 0% 100%;
+  --mdl-background: 220 20% 5%;           /* #0B0D11 — navy-black canvas */
+  --mdl-foreground: 220 20% 95%;          /* #F0F2F5 — soft white text */
+  --mdl-card: 220 16% 9%;                 /* #13161C — card surface */
+  --mdl-card-foreground: 220 20% 95%;
+  --mdl-popover: 220 14% 12%;             /* #1A1E26 — popover surface */
+  --mdl-popover-foreground: 220 20% 95%;
   --mdl-primary: 174 72% 46%;             /* #21B8A4 — teal brand accent */
   --mdl-primary-foreground: 0 0% 5%;      /* Near-black text on teal */
-  --mdl-secondary: 0 0% 15%;              /* #252525 — elevated surface */
-  --mdl-secondary-foreground: 0 0% 100%;
-  --mdl-muted: 0 0% 15%;
-  --mdl-muted-foreground: 0 0% 62%;       /* #9E9E9E */
-  --mdl-accent: 0 0% 15%;                 /* Neutral hover state */
-  --mdl-accent-foreground: 0 0% 100%;
+  --mdl-secondary: 220 14% 12%;           /* #1A1E26 — elevated surface */
+  --mdl-secondary-foreground: 220 20% 95%;
+  --mdl-muted: 220 14% 12%;
+  --mdl-muted-foreground: 218 12% 56%;    /* #8A94A6 — cooler gray */
+  --mdl-accent: 220 12% 16%;              /* #232830 — hover state */
+  --mdl-accent-foreground: 220 20% 95%;
   --mdl-brand: 174 72% 46%;              /* Teal brand */
   --mdl-brand-foreground: 0 0% 5%;
-  --mdl-destructive: 4 82% 63%;           /* #EF5350 — thinkorswim red */
+  --mdl-destructive: 350 90% 60%;         /* #F43F5E — rose red */
   --mdl-destructive-foreground: 0 0% 100%;
-  --mdl-success: 160 55% 40%;             /* #26A69A — thinkorswim green */
-  --mdl-border: 0 0% 18%;                 /* #2E2E2E — subtle border */
-  --mdl-input: 0 0% 15%;                  /* #252525 — input bg */
+  --mdl-success: 160 84% 39%;             /* #10B981 — emerald green */
+  --mdl-border: 220 12% 16%;              /* #222630 — subtle navy border */
+  --mdl-input: 220 14% 12%;               /* #1A1E26 — input bg */
   --mdl-ring: 174 72% 46%;               /* Focus ring = teal */
 
-  /* Trading tokens (dark) — thinkorswim palette */
+  /* Trading tokens (dark) — institutional palette */
   --mdl-bid: 210 100% 55%;               /* Blue bid */
-  --mdl-ask: 4 82% 63%;                  /* #EF5350 — thinkorswim red */
-  --mdl-flash-up: 160 55% 40%;           /* #26A69A — thinkorswim green */
-  --mdl-flash-down: 4 82% 63%;           /* #EF5350 — thinkorswim red */
-  --mdl-pnl-positive: 160 55% 40%;       /* #26A69A — trading green */
-  --mdl-pnl-negative: 4 82% 63%;         /* #EF5350 — trading red */
+  --mdl-ask: 350 90% 60%;                /* #F43F5E — rose red */
+  --mdl-flash-up: 160 84% 39%;           /* #10B981 — emerald green */
+  --mdl-flash-down: 350 90% 60%;         /* #F43F5E — rose red */
+  --mdl-pnl-positive: 160 84% 39%;       /* #10B981 — trading green */
+  --mdl-pnl-negative: 350 90% 60%;       /* #F43F5E — trading red */
+}
+
+/* ─── Scrollbar — theme-aware ─────────────────────────────────────── */
+
+/* Light mode */
+:root {
+  scrollbar-color: hsl(220 12% 82%) transparent;
+}
+:root::-webkit-scrollbar { width: 8px; height: 8px; }
+:root::-webkit-scrollbar-track { background: transparent; }
+:root::-webkit-scrollbar-thumb {
+  background: hsl(220 12% 82%);
+  border-radius: 4px;
+}
+:root::-webkit-scrollbar-thumb:hover {
+  background: hsl(220 12% 70%);
+}
+
+/* Dark mode */
+.dark, [data-theme="dark"] {
+  scrollbar-color: hsl(220 12% 20%) transparent;
+}
+.dark::-webkit-scrollbar,
+[data-theme="dark"]::-webkit-scrollbar { width: 8px; height: 8px; }
+.dark::-webkit-scrollbar-track,
+[data-theme="dark"]::-webkit-scrollbar-track { background: transparent; }
+.dark::-webkit-scrollbar-thumb,
+[data-theme="dark"]::-webkit-scrollbar-thumb {
+  background: hsl(220 12% 20%);
+  border-radius: 4px;
+}
+.dark::-webkit-scrollbar-thumb:hover,
+[data-theme="dark"]::-webkit-scrollbar-thumb:hover {
+  background: hsl(220 12% 28%);
+}
+
+/* Apply to all scrollable elements */
+* {
+  scrollbar-width: thin;
+}
+.dark *, [data-theme="dark"] * {
+  scrollbar-color: hsl(220 12% 20%) transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: hsl(var(--mdl-border));
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--mdl-muted-foreground));
 }

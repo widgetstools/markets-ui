@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ButtonModule } from 'primeng/button';
@@ -20,6 +20,24 @@ import { ToggleButtonModule } from 'primeng/togglebutton';
 import { MenuModule } from 'primeng/menu';
 import { SkeletonModule } from 'primeng/skeleton';
 import { DatePickerModule } from 'primeng/datepicker';
+import { TabsModule } from 'primeng/tabs';
+import { DialogModule } from 'primeng/dialog';
+import { TooltipModule } from 'primeng/tooltip';
+import { PopoverModule } from 'primeng/popover';
+import { ToastModule } from 'primeng/toast';
+import { BreadcrumbModule } from 'primeng/breadcrumb';
+import { CarouselModule } from 'primeng/carousel';
+import { FieldsetModule } from 'primeng/fieldset';
+import { ContextMenuModule } from 'primeng/contextmenu';
+import { DrawerModule } from 'primeng/drawer';
+import { InputNumberModule } from 'primeng/inputnumber';
+import { MenubarModule } from 'primeng/menubar';
+import { PaginatorModule } from 'primeng/paginator';
+import { SplitterModule } from 'primeng/splitter';
+import { InputGroupModule } from 'primeng/inputgroup';
+import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
+
+import { MessageService } from 'primeng/api';
 
 import { AgGridAngular } from 'ag-grid-angular';
 import { AllCommunityModule, ModuleRegistry, type ColDef } from 'ag-grid-community';
@@ -147,8 +165,12 @@ const POSITIONS: Position[] = [
     TagModule, DividerModule, AccordionModule, MessageModule, AvatarModule,
     CheckboxModule, RadioButtonModule, ProgressBarModule, SliderModule,
     AgGridAngular, TextareaModule, SelectButtonModule, ToggleButtonModule, MenuModule,
-    SkeletonModule, DatePickerModule,
+    SkeletonModule, DatePickerModule, TabsModule, DialogModule, TooltipModule,
+    PopoverModule, ToastModule, BreadcrumbModule, CarouselModule, FieldsetModule,
+    ContextMenuModule, DrawerModule, InputNumberModule, MenubarModule, PaginatorModule,
+    SplitterModule, InputGroupModule, InputGroupAddonModule,
   ],
+  providers: [MessageService],
   template: `
     <div class="space-y-8">
       <div>
@@ -849,21 +871,510 @@ const POSITIONS: Position[] = [
           </div>
         </div>
       </div>
+
+      <!-- Q. Tabs -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-objects-column text-primary"></i>
+            <h3 class="card-title">Tabs</h3>
+          </div>
+          <p class="card-desc">Tabbed content panels for organizing related views.</p>
+        </div>
+        <div class="card-content">
+          <p-tabs value="0">
+            <p-tablist>
+              <p-tab value="0">Overview</p-tab>
+              <p-tab value="1">Analytics</p-tab>
+              <p-tab value="2">Reports</p-tab>
+            </p-tablist>
+            <p-tabpanels>
+              <p-tabpanel value="0">
+                <div class="pt-4 space-y-2">
+                  <p class="text-sm font-medium">Portfolio Overview</p>
+                  <p class="card-desc">Total Value: $1,234,567.89</p>
+                  <p class="card-desc">Day Change: +$12,345.67 (+1.01%)</p>
+                </div>
+              </p-tabpanel>
+              <p-tabpanel value="1">
+                <div class="pt-4 space-y-2">
+                  <p class="text-sm font-medium">Analytics Summary</p>
+                  <p class="card-desc">Sharpe Ratio: 1.85</p>
+                  <p class="card-desc">Max Drawdown: -8.2%</p>
+                </div>
+              </p-tabpanel>
+              <p-tabpanel value="2">
+                <div class="pt-4 space-y-2">
+                  <p class="text-sm font-medium">Monthly Reports</p>
+                  <p class="card-desc">March 2026: +4.2% return</p>
+                  <p class="card-desc">Q1 2026: +11.8% return</p>
+                </div>
+              </p-tabpanel>
+            </p-tabpanels>
+          </p-tabs>
+        </div>
+      </div>
+
+      <!-- R. Dialog -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-comment text-primary"></i>
+            <h3 class="card-title">Dialog</h3>
+          </div>
+          <p class="card-desc">Modal dialog for confirmations and focused interactions.</p>
+        </div>
+        <div class="card-content">
+          <button pButton label="Open Trade Confirmation" (click)="dialogVisible = true"></button>
+          <p-dialog header="Confirm Trade" [(visible)]="dialogVisible" [modal]="true" [style]="{ width: '400px' }">
+            <p class="text-sm text-[hsl(var(--muted-foreground))] mb-4">
+              You are about to execute the following trade:
+            </p>
+            <div class="space-y-2 mb-6">
+              <div class="flex justify-between text-sm">
+                <span class="text-[hsl(var(--muted-foreground))]">Action</span>
+                <span class="font-medium">Buy</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-[hsl(var(--muted-foreground))]">Instrument</span>
+                <span class="font-medium">10Y UST</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-[hsl(var(--muted-foreground))]">Quantity</span>
+                <span class="font-medium">1,000,000</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-[hsl(var(--muted-foreground))]">Price</span>
+                <span class="font-medium">99.875</span>
+              </div>
+            </div>
+            <div class="flex justify-end gap-2">
+              <button pButton label="Cancel" class="outlined-btn" (click)="dialogVisible = false"></button>
+              <button pButton label="Confirm" (click)="dialogVisible = false"></button>
+            </div>
+          </p-dialog>
+        </div>
+      </div>
+
+      <!-- S. Tooltip -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-info-circle text-primary"></i>
+            <h3 class="card-title">Tooltip</h3>
+          </div>
+          <p class="card-desc">Contextual information on hover for trading actions.</p>
+        </div>
+        <div class="card-content">
+          <div class="flex gap-4">
+            <button pButton label="Bid" class="outlined-btn" pTooltip="Submit a bid order at the current best price" tooltipPosition="top"></button>
+            <button pButton label="Ask" class="outlined-btn" pTooltip="Submit an ask order at the current best price" tooltipPosition="top"></button>
+            <button pButton label="Market" class="outlined-btn" pTooltip="Execute immediately at the best available price" tooltipPosition="top"></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- T. Popover -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-cog text-primary"></i>
+            <h3 class="card-title">Popover</h3>
+          </div>
+          <p class="card-desc">Floating overlay for contextual settings and inputs.</p>
+        </div>
+        <div class="card-content">
+          <button pButton label="Order Settings" class="outlined-btn" (click)="orderSettingsPopover.toggle($event)"></button>
+          <p-popover #orderSettingsPopover>
+            <div class="space-y-4 p-2" style="width: 260px">
+              <h4 class="text-sm font-semibold">Order Settings</h4>
+              <div class="space-y-2">
+                <label class="text-sm text-muted-foreground">Take Profit</label>
+                <input pInputText type="text" placeholder="e.g. 185.00" class="w-full" [(ngModel)]="takeProfit" />
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm text-muted-foreground">Stop Loss</label>
+                <input pInputText type="text" placeholder="e.g. 178.50" class="w-full" [(ngModel)]="stopLoss" />
+              </div>
+            </div>
+          </p-popover>
+        </div>
+      </div>
+
+      <!-- U. Table -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-table text-primary"></i>
+            <h3 class="card-title">Table</h3>
+          </div>
+          <p class="card-desc">Plain HTML table for simple tabular data display.</p>
+        </div>
+        <div class="card-content">
+          <div class="rounded-lg border border-[hsl(var(--border))] overflow-hidden">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-[hsl(var(--border))] bg-[hsl(var(--muted))]">
+                  <th class="px-4 py-3 text-left font-medium text-[hsl(var(--muted-foreground))]">CUSIP</th>
+                  <th class="px-4 py-3 text-left font-medium text-[hsl(var(--muted-foreground))]">Issuer</th>
+                  <th class="px-4 py-3 text-right font-medium text-[hsl(var(--muted-foreground))]">Coupon</th>
+                  <th class="px-4 py-3 text-left font-medium text-[hsl(var(--muted-foreground))]">Maturity</th>
+                  <th class="px-4 py-3 text-right font-medium text-[hsl(var(--muted-foreground))]">Yield</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (bond of bondData; track bond.cusip) {
+                  <tr class="border-b border-[hsl(var(--border))] last:border-0">
+                    <td class="px-4 py-3 font-mono">{{ bond.cusip }}</td>
+                    <td class="px-4 py-3">{{ bond.issuer }}</td>
+                    <td class="px-4 py-3 text-right font-mono">{{ bond.coupon }}</td>
+                    <td class="px-4 py-3">{{ bond.maturity }}</td>
+                    <td class="px-4 py-3 text-right font-mono">{{ bond.yield }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- V. Scroll Area -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-list text-primary"></i>
+            <h3 class="card-title">Scroll Area</h3>
+          </div>
+          <p class="card-desc">Scrollable container for long lists of market data.</p>
+        </div>
+        <div class="card-content">
+          <div class="h-[200px] overflow-auto rounded-lg border border-[hsl(var(--border))]">
+            @for (ticker of tickerData; track ticker.symbol) {
+              <div class="flex items-center justify-between px-4 py-2 border-b border-[hsl(var(--border))] last:border-0">
+                <span class="text-sm font-medium">{{ ticker.symbol }}</span>
+                <span class="text-sm font-mono" [class]="ticker.change >= 0 ? 'text-pnl-positive' : 'text-pnl-negative'">
+                  {{ ticker.price }} ({{ ticker.change >= 0 ? '+' : '' }}{{ ticker.change }}%)
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- W. Toast -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-bell text-primary"></i>
+            <h3 class="card-title">Toast</h3>
+          </div>
+          <p class="card-desc">Notification toasts for trade execution confirmations.</p>
+        </div>
+        <div class="card-content">
+          <p-toast />
+          <div class="flex gap-4">
+            <button pButton label="Show Notification" (click)="showToast()"></button>
+            <button pButton label="Error Toast" class="outlined-btn" (click)="showErrorToast()"></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- X. Breadcrumb -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-sitemap text-primary"></i>
+            <h3 class="card-title">Breadcrumb</h3>
+          </div>
+          <p class="card-desc">Navigation breadcrumb trail for hierarchical page structure.</p>
+        </div>
+        <div class="card-content">
+          <p-breadcrumb [model]="breadcrumbItems" [home]="breadcrumbHome" />
+        </div>
+      </div>
+
+      <!-- Y. Carousel -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-images text-primary"></i>
+            <h3 class="card-title">Carousel</h3>
+          </div>
+          <p class="card-desc">Rotating content display for featured instruments or cards.</p>
+        </div>
+        <div class="card-content">
+          <p-carousel [value]="carouselItems" [numVisible]="3" [numScroll]="1" [circular]="true">
+            <ng-template #item let-card>
+              <div class="rounded-lg border border-[hsl(var(--border))] p-4 mx-2">
+                <p class="text-sm font-semibold">{{ card.title }}</p>
+                <p class="text-xs text-[hsl(var(--muted-foreground))] mt-1">{{ card.description }}</p>
+              </div>
+            </ng-template>
+          </p-carousel>
+        </div>
+      </div>
+
+      <!-- Z. Fieldset (Collapsible) -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-chevron-down text-primary"></i>
+            <h3 class="card-title">Fieldset (Collapsible)</h3>
+          </div>
+          <p class="card-desc">Toggleable grouped content panel for form sections.</p>
+        </div>
+        <div class="card-content">
+          <p-fieldset legend="Trade Details" [toggleable]="true">
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-[hsl(var(--muted-foreground))]">Instrument</span>
+                <span class="font-medium">AAPL</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-[hsl(var(--muted-foreground))]">Side</span>
+                <span class="font-medium">Buy</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-[hsl(var(--muted-foreground))]">Quantity</span>
+                <span class="font-medium font-mono">1,000</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-[hsl(var(--muted-foreground))]">Limit Price</span>
+                <span class="font-medium font-mono">182.50</span>
+              </div>
+            </div>
+          </p-fieldset>
+        </div>
+      </div>
+
+      <!-- AA. Menu (Command Palette) -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-search text-primary"></i>
+            <h3 class="card-title">Menu (Command Palette)</h3>
+          </div>
+          <p class="card-desc">Grouped menu for quick instrument and action lookup.</p>
+        </div>
+        <div class="card-content">
+          <p-menu [model]="commandMenuItems" />
+        </div>
+      </div>
+
+      <!-- AB. Context Menu -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-bars text-primary"></i>
+            <h3 class="card-title">Context Menu</h3>
+          </div>
+          <p class="card-desc">Right-click context menu for row-level actions.</p>
+        </div>
+        <div class="card-content">
+          <div class="rounded-lg border border-dashed border-[hsl(var(--border))] p-8 text-center text-sm text-[hsl(var(--muted-foreground))] cursor-context-menu"
+               (contextmenu)="contextMenu.show($event)">
+            Right-click here to open the context menu
+          </div>
+          <p-contextmenu #contextMenu [model]="contextMenuItems" />
+        </div>
+      </div>
+
+      <!-- AC. Drawer -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-arrow-right text-primary"></i>
+            <h3 class="card-title">Drawer</h3>
+          </div>
+          <p class="card-desc">Slide-out panel for order details and settings.</p>
+        </div>
+        <div class="card-content">
+          <button pButton label="Open Order Details" (click)="drawerVisible = true"></button>
+          <p-drawer [(visible)]="drawerVisible" header="Order Details" position="right">
+            <div class="space-y-4">
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-[hsl(var(--muted-foreground))]">Order ID</span>
+                  <span class="font-mono font-medium">ORD-20260402-001</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-[hsl(var(--muted-foreground))]">Instrument</span>
+                  <span class="font-medium">AAPL</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-[hsl(var(--muted-foreground))]">Side</span>
+                  <span class="font-medium" style="color: hsl(var(--mdl-pnl-positive))">Buy</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-[hsl(var(--muted-foreground))]">Quantity</span>
+                  <span class="font-mono font-medium">500</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-[hsl(var(--muted-foreground))]">Status</span>
+                  <p-tag value="Filled" severity="success" />
+                </div>
+              </div>
+            </div>
+          </p-drawer>
+        </div>
+      </div>
+
+      <!-- AD. InputNumber -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-sort-numeric-up text-primary"></i>
+            <h3 class="card-title">Input Number</h3>
+          </div>
+          <p class="card-desc">Numeric input with increment/decrement for quantity entry.</p>
+        </div>
+        <div class="card-content">
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div class="space-y-2">
+              <label class="text-sm font-medium">Quantity</label>
+              <p-inputnumber [(ngModel)]="inputNumberQty" [showButtons]="true" [min]="0" [max]="10000" [step]="100" placeholder="Enter quantity" />
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-medium">Price</label>
+              <p-inputnumber [(ngModel)]="inputNumberPrice" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" placeholder="Enter price" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AE. Menubar -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-th-large text-primary"></i>
+            <h3 class="card-title">Menubar</h3>
+          </div>
+          <p class="card-desc">Application-level menubar with nested dropdowns.</p>
+        </div>
+        <div class="card-content">
+          <p-menubar [model]="menubarItems" />
+        </div>
+      </div>
+
+      <!-- AF. Paginator -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-arrow-left text-primary"></i>
+            <h3 class="card-title">Paginator</h3>
+          </div>
+          <p class="card-desc">Pagination control for navigating large data sets.</p>
+        </div>
+        <div class="card-content">
+          <p-paginator [rows]="10" [totalRecords]="120" [rowsPerPageOptions]="[10, 25, 50]" />
+        </div>
+      </div>
+
+      <!-- AG. Splitter (Resizable Panels) -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-arrows-h text-primary"></i>
+            <h3 class="card-title">Splitter (Resizable Panels)</h3>
+          </div>
+          <p class="card-desc">Resizable split panels for side-by-side content layout.</p>
+        </div>
+        <div class="card-content">
+          <p-splitter [style]="{ height: '200px' }" [panelSizes]="[50, 50]">
+            <ng-template pTemplate="panel">
+              <div class="flex items-center justify-center h-full p-4">
+                <div class="text-center">
+                  <p class="text-sm font-semibold">Watchlist</p>
+                  <p class="text-xs text-[hsl(var(--muted-foreground))] mt-1">AAPL, GOOGL, MSFT</p>
+                </div>
+              </div>
+            </ng-template>
+            <ng-template pTemplate="panel">
+              <div class="flex items-center justify-center h-full p-4">
+                <div class="text-center">
+                  <p class="text-sm font-semibold">Chart</p>
+                  <p class="text-xs text-[hsl(var(--muted-foreground))] mt-1">Price chart area</p>
+                </div>
+              </div>
+            </ng-template>
+          </p-splitter>
+        </div>
+      </div>
+
+      <!-- AH. Drawer (Sheet / Filter Panel) -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-filter text-primary"></i>
+            <h3 class="card-title">Sheet (Filter Panel)</h3>
+          </div>
+          <p class="card-desc">Slide-out filter panel for narrowing blotter results.</p>
+        </div>
+        <div class="card-content">
+          <button pButton label="Open Filters" class="outlined-btn" (click)="sheetVisible = true"></button>
+          <p-drawer [(visible)]="sheetVisible" header="Filters" position="left">
+            <div class="space-y-4">
+              <div class="space-y-2">
+                <label class="text-sm font-medium">Exchange</label>
+                <p-select [options]="exchangeOptions" [(ngModel)]="selectedExchange" optionLabel="label" optionValue="value" styleClass="w-full" />
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-medium">Status</label>
+                <p-select [options]="statusOptions" [(ngModel)]="selectedStatus" optionLabel="label" optionValue="value" styleClass="w-full" />
+              </div>
+              <div class="space-y-2">
+                <label class="text-sm font-medium">Side</label>
+                <p-select [options]="sideOptions" [(ngModel)]="selectedSide" optionLabel="label" optionValue="value" styleClass="w-full" />
+              </div>
+              <button pButton label="Apply Filters" class="w-full" (click)="sheetVisible = false"></button>
+            </div>
+          </p-drawer>
+        </div>
+      </div>
+
+      <!-- AI. InputGroup -->
+      <div class="card">
+        <div class="card-header">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-dollar text-primary"></i>
+            <h3 class="card-title">Input Group</h3>
+          </div>
+          <p class="card-desc">Inputs with prefix/suffix addons for currency and unit display.</p>
+        </div>
+        <div class="card-content">
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div class="space-y-2">
+              <label class="text-sm font-medium">Price (USD)</label>
+              <p-inputgroup>
+                <p-inputgroup-addon>$</p-inputgroup-addon>
+                <input pInputText placeholder="0.00" />
+              </p-inputgroup>
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-medium">Quantity</label>
+              <p-inputgroup>
+                <input pInputText placeholder="Enter quantity" />
+                <p-inputgroup-addon>lots</p-inputgroup-addon>
+              </p-inputgroup>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   `,
   styles: [`
     :host { display: block; }
 
-    .card { border-radius: var(--mdl-radius, 0.5rem); border: 1px solid hsl(var(--border)); background: hsl(var(--card)); color: hsl(var(--card-foreground)); box-shadow: 0 1px 3px 0 rgba(0,0,0,.1), 0 1px 2px -1px rgba(0,0,0,.1); }
-    .card-header { display: flex; flex-direction: column; gap: 6px; padding: 24px; }
-    .card-title { font-size: 18px; font-weight: 600; line-height: 1; letter-spacing: -0.025em; }
-    .card-desc { font-size: 14px; color: hsl(var(--muted-foreground)); }
-    .card-content { padding: 0 24px 24px; }
+    .card { border-radius: 0.75rem; display: flex; flex-direction: column; gap: 1rem; padding-top: 1rem; padding-bottom: 1rem; overflow: hidden; background: hsl(var(--card)); color: hsl(var(--card-foreground)); box-shadow: inset 0 0 0 1px hsl(var(--foreground) / 0.1); }
+    .card-header { display: grid; grid-auto-rows: min-content; gap: 0.25rem; padding: 0 1rem; }
+    .card-title { font-size: 1rem; font-weight: 500; line-height: 1.375; }
+    .card-desc { font-size: 0.875rem; color: hsl(var(--muted-foreground)); }
+    .card-content { padding: 0 1rem; }
 
-    .inner-card { border-radius: var(--mdl-radius, 0.5rem); border: 1px solid hsl(var(--border)); background: hsl(var(--card)); }
-    .inner-card-header { padding: 24px; padding-bottom: 0; }
-    .inner-card-content { padding: 16px 24px; }
-    .inner-card-footer { padding: 0 24px 24px; }
+    .inner-card { border-radius: 0.75rem; display: flex; flex-direction: column; gap: 1rem; padding-top: 1rem; padding-bottom: 1rem; overflow: hidden; background: hsl(var(--card)); box-shadow: inset 0 0 0 1px hsl(var(--foreground) / 0.1); }
+    .inner-card-header { padding: 0 1rem; }
+    .inner-card-content { padding: 0 1rem; }
+    .inner-card-footer { padding: 0 1rem; }
 
     .swatch { width: 48px; height: 48px; border-radius: 8px; border: 1px solid hsl(var(--border)); box-shadow: 0 1px 2px 0 rgba(0,0,0,.05); }
     .swatch-var { font-size: 10px; color: hsl(var(--muted-foreground)); }
@@ -896,6 +1407,11 @@ const POSITIONS: Position[] = [
   `],
 })
 export class DesignSystemComponent {
+  private messageService: MessageService;
+  constructor(messageService: MessageService) {
+    this.messageService = messageService;
+  }
+
   readonly outlineTagStyle = { background: 'transparent', border: '1px solid hsl(var(--border))', color: 'hsl(var(--foreground))' } as const;
 
   semanticColors = SEMANTIC_COLORS;
@@ -1008,4 +1524,142 @@ export class DesignSystemComponent {
   calendarDate: Date | null = null;
   datePickerEmpty: Date | null = null;
   datePickerFilled: Date | null = new Date();
+
+  /* Dialog state */
+  dialogVisible = false;
+
+  /* Popover state */
+  takeProfit = '';
+  stopLoss = '';
+
+  /* Bond table data */
+  bondData = [
+    { cusip: '912828ZT0', issuer: 'US Treasury', coupon: '2.500%', maturity: '2030-05-15', yield: '4.250%' },
+    { cusip: '912828YK0', issuer: 'US Treasury', coupon: '1.750%', maturity: '2028-11-30', yield: '3.980%' },
+    { cusip: '459058JM8', issuer: 'IBM Corp', coupon: '3.625%', maturity: '2031-02-01', yield: '4.520%' },
+    { cusip: '594918BP8', issuer: 'Microsoft', coupon: '2.875%', maturity: '2029-06-01', yield: '4.150%' },
+  ];
+
+  /* Ticker data for scroll area */
+  tickerData = [
+    { symbol: 'AAPL', price: '184.92', change: 1.35 },
+    { symbol: 'GOOGL', price: '138.98', change: -2.01 },
+    { symbol: 'MSFT', price: '381.46', change: 0.67 },
+    { symbol: 'TSLA', price: '250.47', change: -0.95 },
+    { symbol: 'AMZN', price: '181.70', change: 1.71 },
+    { symbol: 'META', price: '491.35', change: 1.27 },
+    { symbol: 'NVDA', price: '735.10', change: 1.91 },
+    { symbol: 'JPM', price: '201.15', change: 1.39 },
+    { symbol: 'V', price: '275.82', change: -0.96 },
+    { symbol: 'WMT', price: '163.88', change: -0.86 },
+    { symbol: 'DIS', price: '114.20', change: 1.56 },
+    { symbol: 'NFLX', price: '612.40', change: 1.20 },
+    { symbol: 'AMD', price: '159.33', change: -2.12 },
+    { symbol: 'INTC', price: '42.10', change: -3.33 },
+    { symbol: 'BA', price: '218.35', change: 1.27 },
+  ];
+
+  /* Toast methods */
+  showToast() {
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Trade Executed',
+      detail: 'Buy 10Y UST @ 99.875 filled',
+    });
+  }
+
+  showErrorToast() {
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Order Rejected',
+      detail: 'Insufficient margin for AAPL sell order',
+    });
+  }
+
+  /* Breadcrumb */
+  breadcrumbItems = [
+    { label: 'Portfolio' },
+    { label: 'Positions' },
+  ];
+  breadcrumbHome = { icon: 'pi pi-home', routerLink: '/' };
+
+  /* Carousel */
+  carouselItems = [
+    { title: 'AAPL', description: 'Apple Inc. — $184.92' },
+    { title: 'GOOGL', description: 'Alphabet Inc. — $138.98' },
+    { title: 'MSFT', description: 'Microsoft Corp. — $381.46' },
+    { title: 'TSLA', description: 'Tesla Inc. — $250.47' },
+    { title: 'AMZN', description: 'Amazon.com — $181.70' },
+  ];
+
+  /* Command Menu */
+  commandMenuItems = [
+    { label: 'Recent', items: [
+      { label: 'AAPL — Apple Inc.', icon: 'pi pi-clock' },
+      { label: 'GOOGL — Alphabet', icon: 'pi pi-clock' },
+    ]},
+    { label: 'Instruments', items: [
+      { label: 'MSFT — Microsoft', icon: 'pi pi-chart-line' },
+      { label: 'TSLA — Tesla', icon: 'pi pi-chart-line' },
+      { label: 'AMZN — Amazon', icon: 'pi pi-chart-line' },
+    ]},
+  ];
+
+  /* Context Menu */
+  contextMenuItems = [
+    { label: 'View Details', icon: 'pi pi-eye' },
+    { label: 'Edit Order', icon: 'pi pi-pencil' },
+    { separator: true },
+    { label: 'Copy Order ID', icon: 'pi pi-copy' },
+    { separator: true },
+    { label: 'Cancel Order', icon: 'pi pi-times', styleClass: 'close-position-item' },
+  ];
+
+  /* Drawer */
+  drawerVisible = false;
+
+  /* Sheet (Filter Panel) */
+  sheetVisible = false;
+  exchangeOptions = [
+    { label: 'All', value: 'all' },
+    { label: 'NASDAQ', value: 'nasdaq' },
+    { label: 'NYSE', value: 'nyse' },
+  ];
+  statusOptions = [
+    { label: 'All', value: 'all' },
+    { label: 'Filled', value: 'filled' },
+    { label: 'Partial', value: 'partial' },
+    { label: 'Working', value: 'working' },
+  ];
+  sideOptions = [
+    { label: 'All', value: 'all' },
+    { label: 'Buy', value: 'buy' },
+    { label: 'Sell', value: 'sell' },
+  ];
+  selectedExchange = 'all';
+  selectedStatus = 'all';
+  selectedSide = 'all';
+
+  /* InputNumber */
+  inputNumberQty: number | null = 1000;
+  inputNumberPrice: number | null = 182.45;
+
+  /* Menubar */
+  menubarItems = [
+    { label: 'File', icon: 'pi pi-file', items: [
+      { label: 'New Workspace', icon: 'pi pi-plus' },
+      { label: 'Open Layout', icon: 'pi pi-folder-open' },
+      { separator: true },
+      { label: 'Export', icon: 'pi pi-download' },
+    ]},
+    { label: 'Edit', icon: 'pi pi-pencil', items: [
+      { label: 'Preferences', icon: 'pi pi-cog' },
+      { label: 'Reset Layout', icon: 'pi pi-refresh' },
+    ]},
+    { label: 'View', icon: 'pi pi-eye', items: [
+      { label: 'Order Book', icon: 'pi pi-table' },
+      { label: 'Chart', icon: 'pi pi-chart-line' },
+      { label: 'Blotter', icon: 'pi pi-list' },
+    ]},
+  ];
 }

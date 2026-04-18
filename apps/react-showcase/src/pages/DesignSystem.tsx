@@ -22,6 +22,13 @@ import {
   ToggleLeft,
   Menu,
   Loader2,
+  Columns3,
+  MessageSquarePlus,
+  Info,
+  Settings2,
+  Table2,
+  ScrollText,
+  BellRing,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -56,6 +63,37 @@ import { Checkbox } from "../components/ui/checkbox";
 import { Progress } from "../components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group";
 import { Skeleton } from "../components/ui/skeleton";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "../components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../components/ui/popover";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+import { ScrollArea } from "../components/ui/scroll-area";
 import { Calendar } from "../components/ui/calendar";
 import { DatePicker } from "../components/ui/date-picker";
 import { Slider } from "../components/ui/slider";
@@ -79,6 +117,142 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "../components/ui/dropdown-menu";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { Bar, BarChart, XAxis } from "recharts";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+  CommandShortcut,
+} from "@/components/ui/command";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+  ContextMenuSeparator,
+} from "@/components/ui/context-menu";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+  InputOTPSeparator,
+} from "@/components/ui/input-otp";
+import {
+  Menubar,
+  MenubarContent,
+  MenubarItem,
+  MenubarMenu,
+  MenubarSeparator,
+  MenubarTrigger,
+} from "@/components/ui/menubar";
+import {
+  NavigationMenu,
+  NavigationMenuList,
+  NavigationMenuItem,
+  NavigationMenuLink,
+} from "@/components/ui/navigation-menu";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetFooter,
+  SheetClose,
+} from "@/components/ui/sheet";
+import { toast } from "sonner";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import {
+  ChevronsUpDown,
+  Home,
+  GalleryHorizontal,
+  AreaChart,
+  PanelLeftClose,
+  Search,
+  MousePointerClick,
+  PanelBottomOpen,
+  AtSign,
+  KeyRound,
+  MenuSquare,
+  Navigation,
+  ChevronLeft,
+  ChevronRight,
+  GripVertical,
+  PanelRight,
+  Bell,
+  TextCursorInput,
+  DollarSign,
+  Percent,
+  CalendarIcon,
+  Smile,
+  Calculator,
+  CreditCardIcon,
+  UserIcon,
+} from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Color Swatch
@@ -1295,6 +1469,330 @@ function SkeletonSection() {
 }
 
 // ---------------------------------------------------------------------------
+// Section: Tabs
+// ---------------------------------------------------------------------------
+
+function TabsSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Columns3 className="h-5 w-5 text-primary" />
+          <CardTitle>Tabs</CardTitle>
+        </div>
+        <CardDescription>
+          Tabbed interface for switching between related content panels.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview">
+            <div className="rounded-md border p-4">
+              <h4 className="text-sm font-semibold mb-1">Portfolio Overview</h4>
+              <p className="text-sm text-muted-foreground">
+                Total value: $1,245,830.00 &mdash; Daily P&L: +$3,420.50
+              </p>
+            </div>
+          </TabsContent>
+          <TabsContent value="analytics">
+            <div className="rounded-md border p-4">
+              <h4 className="text-sm font-semibold mb-1">Analytics</h4>
+              <p className="text-sm text-muted-foreground">
+                Sharpe Ratio: 1.82 &mdash; Max Drawdown: -4.3% &mdash; Win Rate: 64%
+              </p>
+            </div>
+          </TabsContent>
+          <TabsContent value="reports">
+            <div className="rounded-md border p-4">
+              <h4 className="text-sm font-semibold mb-1">Reports</h4>
+              <p className="text-sm text-muted-foreground">
+                3 reports generated this week. Next scheduled report: Friday 5:00 PM.
+              </p>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Dialog
+// ---------------------------------------------------------------------------
+
+function DialogSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <MessageSquarePlus className="h-5 w-5 text-primary" />
+          <CardTitle>Dialog</CardTitle>
+        </div>
+        <CardDescription>
+          Modal dialog for confirmations and focused interactions.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline">Open Dialog</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Trade</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to execute this trade?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline">Cancel</Button>
+              <Button>Confirm</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Tooltip
+// ---------------------------------------------------------------------------
+
+function TooltipSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Info className="h-5 w-5 text-primary" />
+          <CardTitle>Tooltip</CardTitle>
+        </div>
+        <CardDescription>
+          Contextual information shown on hover.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <TooltipProvider>
+          <div className="flex gap-4">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline">Bid</Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Place a bid order</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline">Ask</Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Place an ask order</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline">Market</Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Execute at market price</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Popover
+// ---------------------------------------------------------------------------
+
+function PopoverSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Settings2 className="h-5 w-5 text-primary" />
+          <CardTitle>Popover</CardTitle>
+        </div>
+        <CardDescription>
+          Floating panel anchored to a trigger element.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline">Order Settings</Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-72 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="tp">Take Profit</Label>
+              <Input id="tp" placeholder="e.g. 105.50" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="sl">Stop Loss</Label>
+              <Input id="sl" placeholder="e.g. 98.25" />
+            </div>
+            <Button className="w-full">Apply</Button>
+          </PopoverContent>
+        </Popover>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Table Component
+// ---------------------------------------------------------------------------
+
+function TableComponentSection() {
+  const bonds = [
+    { cusip: "912828ZT6", issuer: "US Treasury", coupon: "2.875%", maturity: "2028-05-15", yield: "4.32%" },
+    { cusip: "06051GJH3", issuer: "Bank of America", coupon: "3.500%", maturity: "2029-04-19", yield: "4.78%" },
+    { cusip: "459200KG5", issuer: "IBM Corp", coupon: "4.150%", maturity: "2030-07-01", yield: "4.95%" },
+    { cusip: "594918BW3", issuer: "Microsoft", coupon: "2.400%", maturity: "2027-08-08", yield: "4.15%" },
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Table2 className="h-5 w-5 text-primary" />
+          <CardTitle>Table</CardTitle>
+        </div>
+        <CardDescription>
+          Styled HTML table for displaying structured data.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableCaption>Sample bond inventory</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead>CUSIP</TableHead>
+              <TableHead>Issuer</TableHead>
+              <TableHead>Coupon</TableHead>
+              <TableHead>Maturity</TableHead>
+              <TableHead className="text-right">Yield</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {bonds.map((b) => (
+              <TableRow key={b.cusip}>
+                <TableCell className="font-mono">{b.cusip}</TableCell>
+                <TableCell>{b.issuer}</TableCell>
+                <TableCell>{b.coupon}</TableCell>
+                <TableCell>{b.maturity}</TableCell>
+                <TableCell className="text-right">{b.yield}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Scroll Area
+// ---------------------------------------------------------------------------
+
+function ScrollAreaSection() {
+  const tickers = [
+    { symbol: "AAPL", price: 189.84 },
+    { symbol: "MSFT", price: 420.55 },
+    { symbol: "GOOGL", price: 175.98 },
+    { symbol: "AMZN", price: 186.13 },
+    { symbol: "NVDA", price: 878.37 },
+    { symbol: "META", price: 503.28 },
+    { symbol: "TSLA", price: 175.22 },
+    { symbol: "BRK.B", price: 411.63 },
+    { symbol: "JPM", price: 198.47 },
+    { symbol: "V", price: 281.92 },
+    { symbol: "UNH", price: 527.18 },
+    { symbol: "JNJ", price: 156.74 },
+    { symbol: "WMT", price: 169.35 },
+    { symbol: "PG", price: 162.48 },
+    { symbol: "HD", price: 363.91 },
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <ScrollText className="h-5 w-5 text-primary" />
+          <CardTitle>Scroll Area</CardTitle>
+        </div>
+        <CardDescription>
+          Custom scrollable container with styled scrollbar.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ScrollArea className="h-[200px] w-full rounded-md border p-4">
+          <div className="space-y-2">
+            {tickers.map((t) => (
+              <div
+                key={t.symbol}
+                className="flex items-center justify-between py-1 text-sm"
+              >
+                <span className="font-mono font-medium">{t.symbol}</span>
+                <span className="text-muted-foreground">
+                  ${t.price.toFixed(2)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Toast
+// ---------------------------------------------------------------------------
+
+function ToastSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <BellRing className="h-5 w-5 text-primary" />
+          <CardTitle>Toast</CardTitle>
+        </div>
+        <CardDescription>
+          Notification messages that appear temporarily.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {/* Toast requires a Toaster provider at the app root and useToast hook.
+            This button demonstrates the trigger pattern; wire up useToast() in
+            a real implementation. */}
+        <Button
+          variant="outline"
+          onClick={() => {
+            // To enable: import { useToast } from "../components/ui/use-toast"
+            // then call toast({ title: "Trade Executed", description: "Bought 100 AAPL @ $189.84" })
+          }}
+        >
+          Show Notification
+        </Button>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Requires Toaster provider and useToast hook to be wired up at the app root.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Section: Calendar & Date Picker
 // ---------------------------------------------------------------------------
 
@@ -1330,6 +1828,670 @@ function CalendarDatePickerSection() {
 }
 
 // ---------------------------------------------------------------------------
+// Section: Breadcrumb
+// ---------------------------------------------------------------------------
+
+function BreadcrumbSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Home className="h-5 w-5 text-primary" />
+          <CardTitle>Breadcrumb</CardTitle>
+        </div>
+        <CardDescription>Navigation breadcrumb trail for hierarchical pages.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="#">Home</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink href="#">Portfolio</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Positions</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Carousel
+// ---------------------------------------------------------------------------
+
+function CarouselSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <GalleryHorizontal className="h-5 w-5 text-primary" />
+          <CardTitle>Carousel</CardTitle>
+        </div>
+        <CardDescription>Horizontally scrollable content with navigation controls.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="mx-auto max-w-sm">
+          <Carousel>
+            <CarouselContent>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <CarouselItem key={i}>
+                  <div className="flex aspect-video items-center justify-center rounded-lg border bg-muted">
+                    <span className="text-2xl font-semibold text-muted-foreground">Card {i}</span>
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Chart
+// ---------------------------------------------------------------------------
+
+function ChartSection() {
+  const chartData = [
+    { month: "Jan", volume: 186 },
+    { month: "Feb", volume: 305 },
+    { month: "Mar", volume: 237 },
+    { month: "Apr", volume: 273 },
+    { month: "May", volume: 209 },
+    { month: "Jun", volume: 314 },
+  ];
+
+  const chartConfig: ChartConfig = {
+    volume: {
+      label: "Volume",
+      color: "hsl(var(--primary))",
+    },
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <AreaChart className="h-5 w-5 text-primary" />
+          <CardTitle>Chart</CardTitle>
+        </div>
+        <CardDescription>Recharts integration with shadcn chart wrapper.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer config={chartConfig} className="h-[200px] w-full">
+          <BarChart data={chartData}>
+            <XAxis dataKey="month" tickLine={false} axisLine={false} />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <Bar dataKey="volume" fill="var(--color-volume)" radius={4} />
+          </BarChart>
+        </ChartContainer>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Collapsible
+// ---------------------------------------------------------------------------
+
+function CollapsibleSection() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <PanelLeftClose className="h-5 w-5 text-primary" />
+          <CardTitle>Collapsible</CardTitle>
+        </div>
+        <CardDescription>Expandable section that reveals hidden content.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Collapsible open={open} onOpenChange={setOpen} className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold">Trade Details</h4>
+            <CollapsibleTrigger>
+              <Button variant="ghost" size="sm">
+                <ChevronsUpDown className="h-4 w-4" />
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+          <div className="rounded-md border px-4 py-2 text-sm">
+            AAPL &mdash; Buy 100 @ $189.84
+          </div>
+          <CollapsibleContent className="space-y-2">
+            <div className="rounded-md border px-4 py-2 text-sm">
+              Order Type: Limit
+            </div>
+            <div className="rounded-md border px-4 py-2 text-sm">
+              Time in Force: GTC
+            </div>
+            <div className="rounded-md border px-4 py-2 text-sm">
+              Commission: $1.25
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Command
+// ---------------------------------------------------------------------------
+
+function CommandSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Search className="h-5 w-5 text-primary" />
+          <CardTitle>Command</CardTitle>
+        </div>
+        <CardDescription>
+          Searchable command palette for quick actions. Built on top of cmdk.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Command className="max-w-md rounded-lg border shadow-md">
+          <CommandInput placeholder="Type a command or search..." />
+          <CommandList>
+            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandGroup heading="Suggestions">
+              <CommandItem>
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                <span>Calendar</span>
+              </CommandItem>
+              <CommandItem>
+                <Smile className="mr-2 h-4 w-4" />
+                <span>Search Emoji</span>
+              </CommandItem>
+              <CommandItem>
+                <Calculator className="mr-2 h-4 w-4" />
+                <span>Calculator</span>
+              </CommandItem>
+            </CommandGroup>
+            <CommandSeparator />
+            <CommandGroup heading="Settings">
+              <CommandItem>
+                <UserIcon className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+                <CommandShortcut>⌘P</CommandShortcut>
+              </CommandItem>
+              <CommandItem>
+                <CreditCardIcon className="mr-2 h-4 w-4" />
+                <span>Billing</span>
+                <CommandShortcut>⌘B</CommandShortcut>
+              </CommandItem>
+              <CommandItem>
+                <Settings2 className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+                <CommandShortcut>⌘S</CommandShortcut>
+              </CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Context Menu
+// ---------------------------------------------------------------------------
+
+function ContextMenuSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <MousePointerClick className="h-5 w-5 text-primary" />
+          <CardTitle>Context Menu</CardTitle>
+        </div>
+        <CardDescription>Right-click triggered menu for contextual actions.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ContextMenu>
+          <ContextMenuTrigger className="flex h-24 w-full items-center justify-center rounded-md border border-dashed text-sm text-muted-foreground">
+            Right-click here
+          </ContextMenuTrigger>
+          <ContextMenuContent>
+            <ContextMenuItem>Buy</ContextMenuItem>
+            <ContextMenuItem>Sell</ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem>View Chart</ContextMenuItem>
+            <ContextMenuItem>Add to Watchlist</ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem>Cancel Order</ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Drawer
+// ---------------------------------------------------------------------------
+
+function DrawerSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <PanelBottomOpen className="h-5 w-5 text-primary" />
+          <CardTitle>Drawer</CardTitle>
+        </div>
+        <CardDescription>Bottom sheet drawer for order details and forms.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Drawer>
+          <DrawerTrigger asChild>
+            <Button variant="outline">Open Drawer</Button>
+          </DrawerTrigger>
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>Order Summary</DrawerTitle>
+              <DrawerDescription>Review your order before submitting.</DrawerDescription>
+            </DrawerHeader>
+            <div className="px-4 space-y-2 text-sm">
+              <div className="flex justify-between"><span>Instrument</span><span className="font-mono">AAPL</span></div>
+              <div className="flex justify-between"><span>Side</span><span className="text-green-500">Buy</span></div>
+              <div className="flex justify-between"><span>Quantity</span><span className="font-mono">100</span></div>
+              <div className="flex justify-between"><span>Price</span><span className="font-mono">$189.84</span></div>
+            </div>
+            <DrawerFooter>
+              <Button>Submit Order</Button>
+              <DrawerClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DrawerClose>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Hover Card
+// ---------------------------------------------------------------------------
+
+function HoverCardSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <AtSign className="h-5 w-5 text-primary" />
+          <CardTitle>Hover Card</CardTitle>
+        </div>
+        <CardDescription>Popover content triggered on hover.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm">
+          Check out{" "}
+          <HoverCard>
+            <HoverCardTrigger>
+              <Button variant="link" className="px-0 h-auto">@AAPL</Button>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-64">
+              <div className="space-y-1">
+                <h4 className="text-sm font-semibold">Apple Inc.</h4>
+                <p className="text-xs text-muted-foreground">NASDAQ: AAPL</p>
+                <div className="flex items-center gap-2 pt-1">
+                  <span className="font-mono text-sm font-bold">$189.84</span>
+                  <Badge variant="default" className="text-xs">+1.25%</Badge>
+                </div>
+                <p className="text-xs text-muted-foreground pt-1">
+                  Market Cap: $2.94T &middot; P/E: 31.2
+                </p>
+              </div>
+            </HoverCardContent>
+          </HoverCard>{" "}
+          for latest pricing.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Input OTP
+// ---------------------------------------------------------------------------
+
+function InputOTPSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <KeyRound className="h-5 w-5 text-primary" />
+          <CardTitle>Input OTP</CardTitle>
+        </div>
+        <CardDescription>One-time password input for 2FA verification.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <InputOTP maxLength={6}>
+          <InputOTPGroup>
+            <InputOTPSlot index={0} />
+            <InputOTPSlot index={1} />
+            <InputOTPSlot index={2} />
+          </InputOTPGroup>
+          <InputOTPSeparator />
+          <InputOTPGroup>
+            <InputOTPSlot index={3} />
+            <InputOTPSlot index={4} />
+            <InputOTPSlot index={5} />
+          </InputOTPGroup>
+        </InputOTP>
+        <p className="mt-2 text-xs text-muted-foreground">Enter the 6-digit code from your authenticator app.</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Menubar
+// ---------------------------------------------------------------------------
+
+function MenubarSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <MenuSquare className="h-5 w-5 text-primary" />
+          <CardTitle>Menubar</CardTitle>
+        </div>
+        <CardDescription>Application menubar like a trading terminal.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Menubar>
+          <MenubarMenu>
+            <MenubarTrigger>File</MenubarTrigger>
+            <MenubarContent>
+              <MenubarItem>New Workspace</MenubarItem>
+              <MenubarItem>Open Layout</MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem>Save Layout</MenubarItem>
+              <MenubarItem>Export</MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
+          <MenubarMenu>
+            <MenubarTrigger>Edit</MenubarTrigger>
+            <MenubarContent>
+              <MenubarItem>Preferences</MenubarItem>
+              <MenubarItem>Columns</MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
+          <MenubarMenu>
+            <MenubarTrigger>View</MenubarTrigger>
+            <MenubarContent>
+              <MenubarItem>Order Book</MenubarItem>
+              <MenubarItem>Time &amp; Sales</MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem>Toggle Sidebar</MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
+        </Menubar>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Navigation Menu
+// ---------------------------------------------------------------------------
+
+function NavigationMenuSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Navigation className="h-5 w-5 text-primary" />
+          <CardTitle>Navigation Menu</CardTitle>
+        </div>
+        <CardDescription>Horizontal navigation for top-level sections.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <NavigationMenu>
+          <NavigationMenuList>
+            <NavigationMenuItem>
+              <NavigationMenuLink className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium hover:bg-accent" href="#">
+                Portfolio
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <NavigationMenuLink className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium hover:bg-accent" href="#">
+                Trading
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <NavigationMenuLink className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium hover:bg-accent" href="#">
+                Analytics
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+          </NavigationMenuList>
+        </NavigationMenu>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Pagination
+// ---------------------------------------------------------------------------
+
+function PaginationSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <ChevronRight className="h-5 w-5 text-primary" />
+          <CardTitle>Pagination</CardTitle>
+        </div>
+        <CardDescription>Page navigation for paginated data sets.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious href="#" />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#" isActive>1</PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">2</PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">3</PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationEllipsis />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationLink href="#">5</PaginationLink>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext href="#" />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Resizable
+// ---------------------------------------------------------------------------
+
+function ResizableSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <GripVertical className="h-5 w-5 text-primary" />
+          <CardTitle>Resizable</CardTitle>
+        </div>
+        <CardDescription>Resizable panels with draggable handles.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ResizablePanelGroup orientation="horizontal" className="min-h-[120px] rounded-lg border">
+          <ResizablePanel defaultSize={50}>
+            <div className="flex h-full items-center justify-center p-4">
+              <span className="text-sm font-medium text-muted-foreground">Watchlist</span>
+            </div>
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel defaultSize={50}>
+            <div className="flex h-full items-center justify-center p-4">
+              <span className="text-sm font-medium text-muted-foreground">Chart</span>
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Sheet
+// ---------------------------------------------------------------------------
+
+function SheetSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <PanelRight className="h-5 w-5 text-primary" />
+          <CardTitle>Sheet</CardTitle>
+        </div>
+        <CardDescription>Side panel overlay for filters and settings.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Sheet>
+          <SheetTrigger>
+            <Button variant="outline">Open Filters</Button>
+          </SheetTrigger>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Filter Settings</SheetTitle>
+              <SheetDescription>Adjust filters for your trade blotter.</SheetDescription>
+            </SheetHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Instrument</Label>
+                <Input placeholder="e.g. AAPL" />
+              </div>
+              <div className="space-y-2">
+                <Label>Side</Label>
+                <Select>
+                  <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="buy">Buy</SelectItem>
+                    <SelectItem value="sell">Sell</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch id="filled-only" />
+                <Label htmlFor="filled-only">Filled only</Label>
+              </div>
+            </div>
+            <SheetFooter>
+              <SheetClose>
+                <Button>Apply Filters</Button>
+              </SheetClose>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Sonner (Toast)
+// ---------------------------------------------------------------------------
+
+function SonnerSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Bell className="h-5 w-5 text-primary" />
+          <CardTitle>Sonner</CardTitle>
+        </div>
+        <CardDescription>Lightweight toast notifications via the sonner library.</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-wrap gap-2">
+        <Button variant="outline" onClick={() => toast("Trade executed successfully")}>
+          Show Toast
+        </Button>
+        <Button variant="outline" onClick={() => toast.success("Order filled: 100 AAPL @ $189.84")}>
+          Success
+        </Button>
+        <Button variant="outline" onClick={() => toast.error("Order rejected: insufficient margin")}>
+          Error
+        </Button>
+        <p className="mt-2 w-full text-xs text-muted-foreground">
+          Requires the Sonner Toaster component to be mounted at the app root.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section: Input Group
+// ---------------------------------------------------------------------------
+
+function InputGroupSection() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <TextCursorInput className="h-5 w-5 text-primary" />
+          <CardTitle>Input Group</CardTitle>
+        </div>
+        <CardDescription>Input with prefix and suffix addon elements.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label>Price</Label>
+          <InputGroup>
+            <InputGroupAddon align="inline-start">
+              <DollarSign className="h-4 w-4" />
+            </InputGroupAddon>
+            <InputGroupInput placeholder="0.00" />
+          </InputGroup>
+        </div>
+        <div className="space-y-2">
+          <Label>Allocation</Label>
+          <InputGroup>
+            <InputGroupInput placeholder="50" />
+            <InputGroupAddon align="inline-end">
+              <Percent className="h-4 w-4" />
+            </InputGroupAddon>
+          </InputGroup>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Design System Page
 // ---------------------------------------------------------------------------
 
@@ -1358,7 +2520,30 @@ export default function DesignSystem() {
       <ToggleSection />
       <DropdownMenuSection />
       <SkeletonSection />
+      <TabsSection />
+      <DialogSection />
+      <TooltipSection />
+      <PopoverSection />
+      <TableComponentSection />
+      <ScrollAreaSection />
+      <ToastSection />
       <CalendarDatePickerSection />
+      <BreadcrumbSection />
+      <CarouselSection />
+      <ChartSection />
+      <CollapsibleSection />
+      <CommandSection />
+      <ContextMenuSection />
+      <DrawerSection />
+      <HoverCardSection />
+      <InputOTPSection />
+      <MenubarSection />
+      <NavigationMenuSection />
+      <PaginationSection />
+      <ResizableSection />
+      <SheetSection />
+      <SonnerSection />
+      <InputGroupSection />
     </div>
   );
 }

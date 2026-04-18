@@ -1,11 +1,14 @@
 @import '@marketsui/tokens/css';
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
@@ -13,6 +16,7 @@
     margin: 0;
     padding: 0;
   }
+  /* Color tokens come from @marketsui/tokens/css — no overrides here */
 }
 
 /* Flash animations for trading price ticks */
@@ -94,4 +98,14 @@
 
 .trading-dock .dv-resize-container {
   background: hsl(var(--background));
+}
+
+/* ── Command palette input fix for dark mode ── */
+[data-slot="command-input-wrapper"] [data-slot="input-group"] {
+  background: hsl(var(--secondary)) !important;
+  border-color: hsl(var(--border)) !important;
+}
+[data-slot="command"] {
+  background: hsl(var(--popover)) !important;
+  color: hsl(var(--popover-foreground)) !important;
 }

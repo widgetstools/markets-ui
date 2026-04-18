@@ -59,18 +59,27 @@ function Header() {
 
 function Layout() {
   const location = useLocation();
-  const isWide = location.pathname === "/trading";
+  const isTrading = location.pathname === "/trading";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
       <Header />
-      <main className={`mx-auto px-6 py-8 ${isWide ? "max-w-[1600px]" : "max-w-7xl"}`}>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/design-system" element={<DesignSystem />} />
-          <Route path="/trading" element={<Trading />} />
-        </Routes>
-      </main>
+      {isTrading ? (
+        <main className="flex-1 min-h-0">
+          <Routes>
+            <Route path="/trading" element={<Trading />} />
+          </Routes>
+        </main>
+      ) : (
+        <main className="flex-1 min-h-0 overflow-auto">
+          <div className="mx-auto max-w-7xl px-6 py-8">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/design-system" element={<DesignSystem />} />
+            </Routes>
+          </div>
+        </main>
+      )}
     </div>
   );
 }

@@ -951,7 +951,6 @@ const marketsLightTheme = createTheme(
 
 const defaultState: DockManagerState = {
   panels: {
-    summary: { id: "summary", title: "Portfolio Summary", closable: false, floatable: false, widgetType: "portfolio-summary" },
     positions: { id: "positions", title: "Positions Blotter", closable: false, floatable: true, widgetType: "positions-blotter" },
     activity: { id: "activity", title: "Activity", closable: false, floatable: true, widgetType: "activity-panel" },
     detail: { id: "detail", title: "Bond Detail", closable: true, floatable: true, widgetType: "bond-detail" },
@@ -960,48 +959,34 @@ const defaultState: DockManagerState = {
   layout: {
     type: "split",
     id: "root",
-    direction: "vertical",
-    sizes: [12, 88],
+    direction: "horizontal",
+    sizes: [65, 35],
     children: [
       {
-        type: "tabgroup",
-        id: "tg_summary",
-        panels: ["summary"],
-        activePanel: "summary",
-      },
-      {
         type: "split",
-        id: "main_split",
-        direction: "horizontal",
-        sizes: [65, 35],
+        id: "left_split",
+        direction: "vertical",
+        sizes: [60, 40],
         children: [
           {
-            type: "split",
-            id: "left_split",
-            direction: "vertical",
-            sizes: [60, 40],
-            children: [
-              {
-                type: "tabgroup",
-                id: "tg_positions",
-                panels: ["positions"],
-                activePanel: "positions",
-              },
-              {
-                type: "tabgroup",
-                id: "tg_activity",
-                panels: ["activity"],
-                activePanel: "activity",
-              },
-            ],
+            type: "tabgroup",
+            id: "tg_positions",
+            panels: ["positions"],
+            activePanel: "positions",
           },
           {
             type: "tabgroup",
-            id: "tg_right",
-            panels: ["detail", "ladder"],
-            activePanel: "detail",
+            id: "tg_activity",
+            panels: ["activity"],
+            activePanel: "activity",
           },
         ],
+      },
+      {
+        type: "tabgroup",
+        id: "tg_right",
+        panels: ["detail", "ladder"],
+        activePanel: "detail",
       },
     ],
   },
@@ -1011,39 +996,6 @@ const defaultState: DockManagerState = {
   nextZIndex: 1,
   activePaneId: "positions",
 };
-
-// ---------------------------------------------------------------------------
-// Dock Widget: Portfolio Summary
-// ---------------------------------------------------------------------------
-
-function PortfolioSummaryWidget(_props: WidgetProps) {
-  const { totalNotional, totalMktValue, totalPnl, totalDv01 } = useContext(TradingContext);
-
-  return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", gap: 24, padding: "0 20px" }}>
-      {([
-        { label: "Notional", value: formatCurrency(totalNotional), color: undefined },
-        { label: "Mkt Value", value: formatCurrency(totalMktValue), color: undefined },
-        { label: "P&L", value: formatPnl(totalPnl), color: totalPnl >= 0 ? CLR_SUCCESS : CLR_DANGER },
-        { label: "DV01", value: "$" + formatNumber(totalDv01), color: undefined },
-      ] as const).map((kpi, i) => (
-        <div
-          key={kpi.label}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            padding: "0 20px",
-            borderRight: i < 3 ? "1px solid hsl(var(--border))" : "none",
-          }}
-        >
-          <span style={{ fontSize: 10, color: "hsl(var(--muted-foreground))", lineHeight: "14px", textTransform: "uppercase", letterSpacing: "0.05em" }}>{kpi.label}</span>
-          <span style={{ fontSize: 18, fontWeight: 700, ...MONO, color: kpi.color, lineHeight: "24px" }}>{kpi.value}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Dock Widget: Positions Blotter
@@ -1504,7 +1456,6 @@ function OrderTicketWidget({ panel }: WidgetProps) {
 // ---------------------------------------------------------------------------
 
 const WIDGETS: Record<string, React.ComponentType<WidgetProps>> = {
-  "portfolio-summary": PortfolioSummaryWidget,
   "positions-blotter": PositionsBlotterWidget,
   "activity-panel": ActivityPanelWidget,
   "bond-detail": BondDetailWidget,

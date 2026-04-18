@@ -1,5 +1,27 @@
 import { useState } from "react";
-import { Copy, CreditCard, Apple } from "lucide-react";
+import {
+  CreditCard,
+  Apple,
+  Check,
+  Star,
+  Search,
+  Plus,
+  Minus,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  MoreHorizontal,
+  Archive,
+  Clock,
+  Sparkles,
+  Globe,
+  ArrowUp,
+  Loader2,
+  CheckCircle2,
+  Paperclip,
+  Info,
+  Mic,
+} from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -20,123 +42,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
+import { Badge } from "../components/ui/badge";
+import { Checkbox } from "../components/ui/checkbox";
+import { Slider } from "../components/ui/slider";
+import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group";
+import { Avatar, AvatarFallback } from "../components/ui/avatar";
+import { Textarea } from "../components/ui/textarea";
+import { ToggleGroup, ToggleGroupItem } from "../components/ui/toggle-group";
 
 // ---------------------------------------------------------------------------
-// Types
+// Column 0 — Single tall payment card
 // ---------------------------------------------------------------------------
 
-interface TeamMember {
-  name: string;
-  email: string;
-  initials: string;
-  role: string;
-}
-
-interface SaleEntry {
-  name: string;
-  email: string;
-  initials: string;
-  amount: string;
-}
-
-interface ShareUser {
-  name: string;
-  email: string;
-  initials: string;
-  permission: string;
-}
-
-interface NotificationSetting {
-  id: string;
-  title: string;
-  description: string;
-  enabled: boolean;
-}
-
-// ---------------------------------------------------------------------------
-// Data
-// ---------------------------------------------------------------------------
-
-const teamMembers: TeamMember[] = [
-  { name: "Sofia Davis", email: "sofia@example.com", initials: "SD", role: "Owner" },
-  { name: "Jackson Lee", email: "jackson@example.com", initials: "JL", role: "Member" },
-  { name: "Isabella Nguyen", email: "isabella@example.com", initials: "IN", role: "Member" },
-  { name: "William Kim", email: "william@example.com", initials: "WK", role: "Viewer" },
-];
-
-const recentSales: SaleEntry[] = [
-  { name: "Olivia Martin", email: "olivia.martin@email.com", initials: "OM", amount: "+$1,999.00" },
-  { name: "Jackson Lee", email: "jackson.lee@email.com", initials: "JL", amount: "+$39.00" },
-  { name: "Isabella Nguyen", email: "isabella.nguyen@email.com", initials: "IN", amount: "+$299.00" },
-  { name: "William Kim", email: "will@email.com", initials: "WK", amount: "+$99.00" },
-  { name: "Sofia Davis", email: "sofia.davis@email.com", initials: "SD", amount: "+$1,499.00" },
-];
-
-const shareUsers: ShareUser[] = [
-  { name: "Olivia Martin", email: "m@example.com", initials: "OM", permission: "edit" },
-  { name: "Isabella Nguyen", email: "b@example.com", initials: "IN", permission: "view" },
-  { name: "Sofia Davis", email: "p@example.com", initials: "SD", permission: "view" },
-];
-
-const defaultNotifications: NotificationSetting[] = [
-  {
-    id: "communication",
-    title: "Communication emails",
-    description: "Receive emails about your account activity.",
-    enabled: true,
-  },
-  {
-    id: "marketing",
-    title: "Marketing emails",
-    description: "Receive emails about new products, features, and more.",
-    enabled: false,
-  },
-  {
-    id: "social",
-    title: "Social emails",
-    description: "Receive emails for friend requests, follows, and more.",
-    enabled: true,
-  },
-  {
-    id: "security",
-    title: "Security emails",
-    description: "Receive emails about your account security.",
-    enabled: true,
-  },
-];
-
-// ---------------------------------------------------------------------------
-// Sub-components
-// ---------------------------------------------------------------------------
-
-function Avatar({ initials, className }: { initials: string; className?: string }) {
-  return (
-    <div
-      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary ${className ?? ""}`}
-    >
-      {initials}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Card: Payment Method
-// ---------------------------------------------------------------------------
-
-function PaymentMethodCard() {
+function PaymentCard() {
   const [method, setMethod] = useState<"card" | "paypal" | "apple">("card");
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Payment Method</CardTitle>
-        <CardDescription>Add a new payment method to your account.</CardDescription>
+        <CardDescription>
+          All transactions are secure and encrypted.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Payment type toggles */}
         <div className="grid grid-cols-3 gap-4">
           <Button
             variant={method === "card" ? "outline" : "ghost"}
-            className={`flex flex-col items-center gap-1 h-auto py-3 ${method === "card" ? "border-primary" : ""}`}
+            className={`flex flex-col items-center gap-1 h-auto py-3 ${method === "card" ? "!border-primary" : ""}`}
             onClick={() => setMethod("card")}
           >
             <CreditCard className="h-5 w-5" />
@@ -144,7 +78,7 @@ function PaymentMethodCard() {
           </Button>
           <Button
             variant={method === "paypal" ? "outline" : "ghost"}
-            className={`flex flex-col items-center gap-1 h-auto py-3 ${method === "paypal" ? "border-primary" : ""}`}
+            className={`flex flex-col items-center gap-1 h-auto py-3 ${method === "paypal" ? "!border-primary" : ""}`}
             onClick={() => setMethod("paypal")}
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
@@ -154,7 +88,7 @@ function PaymentMethodCard() {
           </Button>
           <Button
             variant={method === "apple" ? "outline" : "ghost"}
-            className={`flex flex-col items-center gap-1 h-auto py-3 ${method === "apple" ? "border-primary" : ""}`}
+            className={`flex flex-col items-center gap-1 h-auto py-3 ${method === "apple" ? "!border-primary" : ""}`}
             onClick={() => setMethod("apple")}
           >
             <Apple className="h-5 w-5" />
@@ -162,208 +96,384 @@ function PaymentMethodCard() {
           </Button>
         </div>
 
+        {/* Name on Card */}
         <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
-          <Input id="name" placeholder="First Last" />
+          <Label htmlFor="name">Name on Card</Label>
+          <Input id="name" placeholder="John Doe" />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="card-number">Card number</Label>
-          <Input id="card-number" placeholder="" />
+
+        {/* Card Number + CVV */}
+        <div className="grid grid-cols-4 gap-4">
+          <div className="col-span-3 space-y-2">
+            <Label htmlFor="card-number">Card Number</Label>
+            <Input id="card-number" placeholder="1234 5678 9012 3456" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="cvv">CVV</Label>
+            <Input id="cvv" placeholder="123" />
+          </div>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Enter your 16-digit number.
+        </p>
+
+        {/* Month + Year */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="expires">Expires</Label>
+            <Label>Month</Label>
             <Select>
-              <SelectTrigger id="expires">
-                <SelectValue placeholder="Month" />
+              <SelectTrigger>
+                <SelectValue placeholder="MM" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="01">January</SelectItem>
-                <SelectItem value="02">February</SelectItem>
-                <SelectItem value="03">March</SelectItem>
-                <SelectItem value="04">April</SelectItem>
-                <SelectItem value="05">May</SelectItem>
-                <SelectItem value="06">June</SelectItem>
-                <SelectItem value="07">July</SelectItem>
-                <SelectItem value="08">August</SelectItem>
-                <SelectItem value="09">September</SelectItem>
-                <SelectItem value="10">October</SelectItem>
-                <SelectItem value="11">November</SelectItem>
-                <SelectItem value="12">December</SelectItem>
+                {Array.from({ length: 12 }, (_, i) => {
+                  const v = String(i + 1).padStart(2, "0");
+                  return (
+                    <SelectItem key={v} value={v}>
+                      {v}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="year">Year</Label>
+            <Label>Year</Label>
             <Select>
-              <SelectTrigger id="year">
-                <SelectValue placeholder="Year" />
+              <SelectTrigger>
+                <SelectValue placeholder="YYYY" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="2024">2024</SelectItem>
-                <SelectItem value="2025">2025</SelectItem>
-                <SelectItem value="2026">2026</SelectItem>
-                <SelectItem value="2027">2027</SelectItem>
-                <SelectItem value="2028">2028</SelectItem>
-                <SelectItem value="2029">2029</SelectItem>
+                {[2024, 2025, 2026, 2027, 2028, 2029].map((y) => (
+                  <SelectItem key={y} value={String(y)}>
+                    {y}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
         </div>
+
+        <Separator />
+
+        {/* Billing Address */}
         <div className="space-y-2">
-          <Label htmlFor="cvc">CVC</Label>
-          <Input id="cvc" placeholder="CVC" />
+          <p className="text-sm font-medium">Billing Address</p>
+          <p className="text-xs text-muted-foreground">
+            The billing address associated with your payment method.
+          </p>
+          <div className="flex items-center space-x-2 pt-1">
+            <Checkbox id="same-address" defaultChecked />
+            <Label htmlFor="same-address" className="text-sm font-normal">
+              Same as shipping address
+            </Label>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Comments */}
+        <div className="space-y-2">
+          <Label>Comments</Label>
+          <Textarea placeholder="Add any additional comments" />
         </div>
       </CardContent>
-      <CardFooter>
-        <Button className="w-full">Continue</Button>
+      <CardFooter className="flex gap-2">
+        <Button className="flex-1">Submit</Button>
+        <Button variant="outline" className="flex-1">
+          Cancel
+        </Button>
       </CardFooter>
     </Card>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Card: Team Members
+// Column 1 — 5 cards
 // ---------------------------------------------------------------------------
 
-function TeamMembersCard() {
+function NoTeamMembersCard() {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Team Members</CardTitle>
-        <CardDescription>Invite your team members to collaborate.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {teamMembers.map((member) => (
-          <div key={member.email} className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Avatar initials={member.initials} />
-              <div>
-                <p className="text-sm font-medium leading-none">{member.name}</p>
-                <p className="text-sm text-muted-foreground">{member.email}</p>
-              </div>
-            </div>
-            <Select defaultValue={member.role.toLowerCase()}>
-              <SelectTrigger className="w-[110px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="owner">Owner</SelectItem>
-                <SelectItem value="member">Member</SelectItem>
-                <SelectItem value="viewer">Viewer</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        ))}
+      <CardContent className="flex flex-col items-center pt-6 pb-6 text-center">
+        <div className="flex -space-x-3 mb-4">
+          <Avatar className="h-10 w-10 border-2 border-background">
+            <AvatarFallback className="text-xs">CN</AvatarFallback>
+          </Avatar>
+          <Avatar className="h-10 w-10 border-2 border-background">
+            <AvatarFallback className="text-xs">LR</AvatarFallback>
+          </Avatar>
+          <Avatar className="h-10 w-10 border-2 border-background">
+            <AvatarFallback className="text-xs">ER</AvatarFallback>
+          </Avatar>
+        </div>
+        <CardTitle className="text-sm mb-1">No Team Members</CardTitle>
+        <CardDescription className="text-xs mb-4">
+          Invite your team to collaborate on this project.
+        </CardDescription>
+        <Button variant="outline" size="sm">
+          <Plus className="mr-1.5 h-3.5 w-3.5" />
+          Invite Members
+        </Button>
       </CardContent>
     </Card>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Card: Report an Issue
-// ---------------------------------------------------------------------------
+function StatusBadgesRow() {
+  return (
+    <div className="rounded-lg border bg-card p-3 flex flex-wrap gap-2">
+      <Badge variant="outline" className="gap-1.5">
+        <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+        Syncing
+      </Badge>
+      <Badge variant="outline" className="gap-1.5">
+        <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+        Updating
+      </Badge>
+      <Badge variant="outline" className="gap-1.5">
+        <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+        Loading
+      </Badge>
+    </div>
+  );
+}
 
-function ReportIssueCard() {
+function SendMessageRow() {
+  return (
+    <div className="rounded-lg border bg-card p-2">
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+          <Plus className="h-4 w-4" />
+        </Button>
+        <Input
+          placeholder="Send a message..."
+          className="h-8 text-sm border-0 shadow-none focus-visible:ring-0"
+        />
+        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+          <Mic className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function PriceRangeCard() {
+  const [range, setRange] = useState([200, 800]);
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Report an issue</CardTitle>
-        <CardDescription>What area are you having problems with?</CardDescription>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium">Price Range</CardTitle>
+        <CardDescription className="text-xs">
+          Set your budget range (${range[0]} - {range[1]}).
+        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="area">Area</Label>
-            <Select defaultValue="team">
-              <SelectTrigger id="area">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="team">Team</SelectItem>
-                <SelectItem value="billing">Billing</SelectItem>
-                <SelectItem value="account">Account</SelectItem>
-              </SelectContent>
-            </Select>
+      <CardContent>
+        <Slider
+          defaultValue={[200, 800]}
+          min={0}
+          max={1000}
+          step={10}
+          onValueChange={setRange}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
+function BottomStackCard() {
+  return (
+    <Card>
+      <CardContent className="space-y-3 pt-6">
+        {/* Search input */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Search..." className="h-9 pl-8 text-sm" />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="security-level">Security Level</Label>
-            <Select defaultValue="2">
-              <SelectTrigger id="security-level">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">Severity 1 (Highest)</SelectItem>
-                <SelectItem value="2">Severity 2</SelectItem>
-                <SelectItem value="3">Severity 3</SelectItem>
-                <SelectItem value="4">Severity 4</SelectItem>
-                <SelectItem value="5">Severity 5 (Lowest)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            12 results
+          </span>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="subject">Subject</Label>
-          <Input id="subject" placeholder="I need help with..." />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
-          <textarea
-            id="description"
-            placeholder="Please include all information relevant to your issue."
-            className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+
+        {/* URL input */}
+        <div className="flex items-center rounded-md border border-input">
+          <span className="px-3 text-sm text-muted-foreground bg-muted border-r border-input rounded-l-md py-1.5">
+            https://
+          </span>
+          <Input
+            placeholder="example.com"
+            className="border-0 shadow-none focus-visible:ring-0 h-auto py-1.5 text-sm flex-1"
           />
+          <Info className="h-4 w-4 text-muted-foreground mr-2.5 shrink-0" />
+        </div>
+
+        {/* AI chat input */}
+        <Input
+          placeholder="Ask, Search or Chat..."
+          className="h-9 text-sm"
+        />
+
+        {/* Auto / usage row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Plus className="h-3 w-3" />
+            <span>Auto</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">52% used</span>
+            <Button
+              size="icon"
+              className="h-7 w-7 rounded-full"
+            >
+              <ArrowUp className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Username input */}
+        <div className="relative">
+          <Input defaultValue="@shadcn" className="h-9 pr-8 text-sm" />
+          <CheckCircle2 className="absolute right-2.5 top-2.5 h-4 w-4 text-green-500" />
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button variant="ghost">Cancel</Button>
-        <Button>Submit</Button>
-      </CardFooter>
     </Card>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Card: Share Document
+// Column 2 — 4 cards
 // ---------------------------------------------------------------------------
 
-function ShareDocumentCard() {
+function BrowserUrlBar() {
+  return (
+    <div className="rounded-lg border bg-card p-3">
+      <div className="flex items-center gap-2">
+        <Globe className="h-4 w-4 text-muted-foreground shrink-0" />
+        <span className="text-sm text-muted-foreground">https://</span>
+        <span className="flex-1" />
+        <Star className="h-4 w-4 text-muted-foreground shrink-0" />
+      </div>
+    </div>
+  );
+}
+
+function AuthProfileCard() {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Share this document</CardTitle>
-        <CardDescription>Anyone with the link can view this document.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex gap-2">
-          <Input value="http://example.com/link/to/document" readOnly className="flex-1" />
-          <Button variant="secondary" size="sm" className="shrink-0">
-            <Copy className="h-4 w-4" />
+      <CardContent className="space-y-3 pt-6">
+        <div className="flex items-start justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-sm font-medium">Two-factor authentication</p>
+            <p className="text-xs text-muted-foreground">
+              Verify via email or phone number.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" className="shrink-0">
+            Enable
           </Button>
         </div>
         <Separator />
-        <div className="space-y-4">
-          <h4 className="text-sm font-medium">People with access</h4>
-          {shareUsers.map((user) => (
-            <div key={user.email} className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Avatar initials={user.initials} />
-                <div>
-                  <p className="text-sm font-medium leading-none">{user.name}</p>
-                  <p className="text-sm text-muted-foreground">{user.email}</p>
-                </div>
-              </div>
-              <Select defaultValue={user.permission}>
-                <SelectTrigger className="w-[110px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="edit">Can edit</SelectItem>
-                  <SelectItem value="view">Can view</SelectItem>
-                </SelectContent>
-              </Select>
+        <div className="flex items-center gap-3">
+          <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+          <span className="text-sm flex-1">
+            Your profile has been verified.
+          </span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function AppearanceSettings() {
+  return (
+    <div className="rounded-lg border bg-card p-3">
+      <p className="text-sm font-medium">Appearance Settings</p>
+    </div>
+  );
+}
+
+function ComputeEnvironmentCard() {
+  const [gpus, setGpus] = useState(8);
+  return (
+    <Card>
+      <CardContent className="space-y-4 pt-6">
+        {/* Compute Environment */}
+        <div className="space-y-1">
+          <p className="text-sm font-medium">Compute Environment</p>
+          <p className="text-xs text-muted-foreground">
+            Select the compute environment for your cluster.
+          </p>
+        </div>
+        <RadioGroup defaultValue="k8s" className="space-y-3">
+          <div className="flex items-start space-x-3 rounded-md border border-primary p-3">
+            <RadioGroupItem value="k8s" id="k8s" className="mt-0.5" />
+            <div>
+              <Label htmlFor="k8s" className="text-sm font-medium">
+                Kubernetes
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Run GPU workloads on a K8s configured cluster. This is the
+                default.
+              </p>
             </div>
-          ))}
+          </div>
+          <div className="flex items-start space-x-3 rounded-md border p-3 opacity-50">
+            <RadioGroupItem value="vm" id="vm" disabled className="mt-0.5" />
+            <div>
+              <Label htmlFor="vm" className="text-sm font-medium">
+                Virtual Machine
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Access a VM configured cluster to run workloads. (Coming soon)
+              </p>
+            </div>
+          </div>
+        </RadioGroup>
+
+        <Separator />
+
+        {/* Number of GPUs */}
+        <div className="space-y-1">
+          <p className="text-sm font-medium">Number of GPUs</p>
+          <p className="text-xs text-muted-foreground">
+            You can add more later.
+          </p>
+        </div>
+        <div className="flex items-center justify-center gap-4">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setGpus((c) => Math.max(0, c - 1))}
+          >
+            <Minus className="h-4 w-4" />
+          </Button>
+          <span className="w-8 text-center text-lg font-semibold tabular-nums">
+            {gpus}
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setGpus((c) => c + 1)}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <Separator />
+
+        {/* Wallpaper Tinting */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium">Wallpaper Tinting</p>
+            <p className="text-xs text-muted-foreground">
+              Allow the wallpaper to be tinted.
+            </p>
+          </div>
+          <Switch defaultChecked />
         </div>
       </CardContent>
     </Card>
@@ -371,64 +481,171 @@ function ShareDocumentCard() {
 }
 
 // ---------------------------------------------------------------------------
-// Card: Notifications
+// Column 3 — 6 cards (xl only)
 // ---------------------------------------------------------------------------
 
-function NotificationsCard() {
-  const [notifications, setNotifications] =
-    useState<NotificationSetting[]>(defaultNotifications);
-
-  const toggle = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, enabled: !n.enabled } : n)),
-    );
-  };
-
+function PromptContextCard() {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Notifications</CardTitle>
-        <CardDescription>Choose what you want to be notified about.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {notifications.map((n) => (
-          <div key={n.id} className="flex items-center justify-between space-x-4">
-            <div className="flex-1 space-y-1">
-              <p className="text-sm font-medium leading-none">{n.title}</p>
-              <p className="text-sm text-muted-foreground">{n.description}</p>
-            </div>
-            <Switch checked={n.enabled} onCheckedChange={() => toggle(n.id)} />
+      <CardContent className="space-y-3 pt-6">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-muted-foreground" />
+          <Button variant="outline" size="sm" className="text-xs">
+            Add context
+          </Button>
+        </div>
+        <Input
+          placeholder="Ask, search, or make anything..."
+          className="h-9 text-sm"
+        />
+        <Separator />
+        <div className="flex items-center gap-2">
+          <Paperclip className="h-4 w-4 text-muted-foreground shrink-0" />
+          <span className="text-xs text-muted-foreground">Auto</span>
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Globe className="h-3 w-3" />
+            <span>All Sources</span>
           </div>
-        ))}
+          <span className="flex-1" />
+          <Button size="icon" className="h-7 w-7 rounded-full">
+            <ArrowUp className="h-3.5 w-3.5" />
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Card: Recent Sales
-// ---------------------------------------------------------------------------
+function ActionsBar() {
+  return (
+    <div className="rounded-lg border bg-card p-2">
+      <div className="flex items-center gap-1">
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="sm" className="h-8 text-xs">
+          Archive
+        </Button>
+        <Button variant="ghost" size="sm" className="h-8 text-xs">
+          Report
+        </Button>
+        <Button variant="ghost" size="sm" className="h-8 text-xs">
+          Snooze
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
 
-function RecentSalesCard() {
+function TermsRow() {
+  return (
+    <div className="rounded-lg border bg-card p-3">
+      <div className="flex items-center space-x-2">
+        <Checkbox id="terms" defaultChecked />
+        <Label htmlFor="terms" className="text-sm font-normal leading-snug">
+          I agree to the terms and conditions
+        </Label>
+      </div>
+    </div>
+  );
+}
+
+function PaginationCopilotRow() {
+  return (
+    <div className="rounded-lg border bg-card p-2">
+      <div className="flex items-center gap-1">
+        {[1, 2, 3].map((n) => (
+          <Button
+            key={n}
+            variant={n === 1 ? "default" : "ghost"}
+            size="icon"
+            className="h-8 w-8 text-xs"
+          >
+            {n}
+          </Button>
+        ))}
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+        <span className="flex-1" />
+        <Sparkles className="h-4 w-4 text-muted-foreground" />
+        <Button variant="outline" size="sm" className="h-8 text-xs gap-1">
+          Copilot
+          <ChevronDown className="h-3 w-3" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function SurveyCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Recent Sales</CardTitle>
-        <CardDescription>You made 265 sales this month.</CardDescription>
+        <CardTitle className="text-sm font-medium">
+          How did you hear about us?
+        </CardTitle>
+        <CardDescription className="text-xs">
+          Select the option that best describes how you found us.
+        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {recentSales.map((sale) => (
-          <div key={sale.email} className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Avatar initials={sale.initials} />
-              <div>
-                <p className="text-sm font-medium leading-none">{sale.name}</p>
-                <p className="text-sm text-muted-foreground">{sale.email}</p>
-              </div>
-            </div>
-            <span className="font-mono text-sm font-medium">{sale.amount}</span>
-          </div>
-        ))}
+      <CardContent>
+        <ToggleGroup
+          type="single"
+          defaultValue="social"
+          variant="outline"
+          className="grid grid-cols-2 gap-2"
+        >
+          <ToggleGroupItem
+            value="social"
+            className="text-xs h-9 rounded-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+          >
+            Social Media
+          </ToggleGroupItem>
+          <ToggleGroupItem
+            value="search"
+            className="text-xs h-9 rounded-md"
+          >
+            Search Engine
+          </ToggleGroupItem>
+          <ToggleGroupItem
+            value="referral"
+            className="text-xs h-9 rounded-md"
+          >
+            Referral
+          </ToggleGroupItem>
+          <ToggleGroupItem
+            value="other"
+            className="text-xs h-9 rounded-md"
+          >
+            Other
+          </ToggleGroupItem>
+        </ToggleGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ProcessingCard() {
+  return (
+    <Card>
+      <CardContent className="flex flex-col items-center text-center pt-6 pb-6 space-y-4">
+        <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
+        <div className="space-y-1">
+          <p className="text-sm font-medium">Processing your request</p>
+          <p className="text-xs text-muted-foreground">
+            Please wait while we process your request. Do not refresh the page.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" className="text-xs">
+          Cancel
+        </Button>
       </CardContent>
     </Card>
   );
@@ -440,23 +657,37 @@ function RecentSalesCard() {
 
 export default function Dashboard() {
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
-      {/* Left column */}
-      <div className="space-y-6">
-        <PaymentMethodCard />
-        <TeamMembersCard />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {/* Column 0 */}
+      <div className="flex flex-col gap-6">
+        <PaymentCard />
       </div>
 
-      {/* Right column */}
-      <div className="space-y-6">
-        <ReportIssueCard />
-        <ShareDocumentCard />
-        <NotificationsCard />
+      {/* Column 1 */}
+      <div className="flex flex-col gap-6">
+        <NoTeamMembersCard />
+        <StatusBadgesRow />
+        <SendMessageRow />
+        <PriceRangeCard />
+        <BottomStackCard />
       </div>
 
-      {/* Bottom full-width */}
-      <div className="lg:col-span-2">
-        <RecentSalesCard />
+      {/* Column 2 */}
+      <div className="flex flex-col gap-6">
+        <BrowserUrlBar />
+        <AuthProfileCard />
+        <AppearanceSettings />
+        <ComputeEnvironmentCard />
+      </div>
+
+      {/* Column 3 */}
+      <div className="hidden xl:flex flex-col gap-6">
+        <PromptContextCard />
+        <ActionsBar />
+        <TermsRow />
+        <PaginationCopilotRow />
+        <SurveyCard />
+        <ProcessingCard />
       </div>
     </div>
   );

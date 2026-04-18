@@ -25,66 +25,66 @@ import {
 
 /**
  * Light mode theme parameters.
- * Clean white backgrounds, teal accent, subtle borders.
+ * Warm off-white backgrounds, reduced contrast for eye comfort.
  */
 const lightParams = {
   /* ── Core colors ── */
   backgroundColor: "#ffffff",
-  foregroundColor: "#181A20",
-  accentColor: "#1DA898",               /* Teal — matches --mdl-primary light */
-  borderColor: "#E5E7EB",               /* Light gray border */
+  foregroundColor: "#181C24",            /* Softened dark — not pure black */
+  accentColor: "#17957E",               /* Teal — slightly deeper for readability */
+  borderColor: "#E4E7EC",               /* Soft border */
 
   /* ── Surfaces ── */
-  headerBackgroundColor: "#FAFAFA",      /* Slightly off-white header */
-  headerTextColor: "#181A20",
-  oddRowBackgroundColor: "#FAFAFA",      /* Subtle zebra striping */
-  rowHoverColor: "#F0FDFA",              /* Light teal hover */
-  selectedRowBackgroundColor: "rgba(29, 168, 152, 0.08)",  /* Teal 8% */
+  headerBackgroundColor: "#F7F8FA",      /* Warm off-white header */
+  headerTextColor: "#6B7280",            /* Muted header — less harsh */
+  oddRowBackgroundColor: "#FAFBFC",      /* Very subtle zebra */
+  rowHoverColor: "#F0F2F5",              /* Neutral hover — not teal-tinted */
+  selectedRowBackgroundColor: "rgba(23, 149, 126, 0.07)",  /* Teal 7% */
 
   /* ── Text ── */
-  textColor: "#181A20",
-  subtleTextColor: "#848E9C",
-  cellTextColor: "#181A20",
+  textColor: "#181C24",
+  subtleTextColor: "#6B7280",
+  cellTextColor: "#181C24",
 
   /* ── Inputs ── */
-  inputBackgroundColor: "#F5F5F5",
-  inputBorder: { color: "#E5E7EB" },
+  inputBackgroundColor: "#F0F2F5",
+  inputBorder: { color: "#E4E7EC" },
 
   /* ── Misc ── */
-  rangeSelectorBackgroundColor: "rgba(29, 168, 152, 0.12)",
-  columnHoverColor: "rgba(29, 168, 152, 0.04)",
+  rangeSelectorBackgroundColor: "rgba(23, 149, 126, 0.10)",
+  columnHoverColor: "rgba(23, 149, 126, 0.04)",
 };
 
 /**
  * Dark mode theme parameters.
- * True black background, warm dark surfaces, teal accent.
+ * Navy-black background, institutional dark surfaces, teal accent.
  * Designed for dense trading data with high readability.
  */
 const darkParams = {
   /* ── Core colors ── */
-  backgroundColor: "#0B0E11",            /* True black — matches --mdl-background dark */
-  foregroundColor: "#EAECEF",            /* Primary text */
+  backgroundColor: "#13161C",            /* Navy-black — matches --mdl-card dark */
+  foregroundColor: "#F0F2F5",            /* Primary text */
   accentColor: "#21B8A4",               /* Teal — matches --mdl-primary dark */
-  borderColor: "#2B2F36",               /* Warm dark border */
+  borderColor: "#222630",               /* Navy-tinted border */
 
   /* ── Surfaces ── */
-  headerBackgroundColor: "#14161A",      /* Slightly raised header */
-  headerTextColor: "#EAECEF",
-  oddRowBackgroundColor: "#14161A",      /* Subtle zebra striping */
-  rowHoverColor: "#1E2026",              /* Card surface on hover */
-  selectedRowBackgroundColor: "rgba(33, 184, 164, 0.12)",  /* Teal 12% */
+  headerBackgroundColor: "#13161C",      /* Same as bg for flat look */
+  headerTextColor: "#8A94A6",            /* Muted header text */
+  oddRowBackgroundColor: "#0F1115",      /* Subtle zebra — slightly darker */
+  rowHoverColor: "#1A1E26",              /* Elevated surface on hover */
+  selectedRowBackgroundColor: "rgba(33, 184, 164, 0.10)",  /* Teal 10% */
 
   /* ── Text ── */
-  textColor: "#EAECEF",
-  subtleTextColor: "#848E9C",
-  cellTextColor: "#EAECEF",
+  textColor: "#F0F2F5",
+  subtleTextColor: "#8A94A6",
+  cellTextColor: "#F0F2F5",
 
   /* ── Inputs ── */
-  inputBackgroundColor: "#1E2026",
-  inputBorder: { color: "#2B2F36" },
+  inputBackgroundColor: "#1A1E26",
+  inputBorder: { color: "#222630" },
 
   /* ── Misc ── */
-  rangeSelectorBackgroundColor: "rgba(33, 184, 164, 0.16)",
+  rangeSelectorBackgroundColor: "rgba(33, 184, 164, 0.14)",
   columnHoverColor: "rgba(33, 184, 164, 0.06)",
 };
 

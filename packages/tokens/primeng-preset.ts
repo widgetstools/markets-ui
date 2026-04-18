@@ -33,36 +33,37 @@ export const marketsPreset = definePreset(Aura, {
     colorScheme: {
       light: {
         primary: {
-          color: "#1DA898",            /* Teal 40% lightness — readable on white */
+          color: "#17957E",            /* Deeper teal — readable on off-white */
           inverseColor: "#ffffff",
           hoverColor: "#0D9488",
           activeColor: "#0F766E",
         },
         highlight: {
-          background: "#1DA898",
+          background: "#17957E",
           focusBackground: "#0D9488",
           color: "#ffffff",
           focusColor: "#ffffff",
         },
+        /* Warm off-white surfaces — reduced contrast for eye comfort */
         surface: {
           0: "#ffffff",
-          50: "#FAFAFA",
-          100: "#F5F5F5",
-          200: "#EEEEEE",
-          300: "#E0E0E0",
-          400: "#BDBDBD",
-          500: "#9E9E9E",
-          600: "#757575",
-          700: "#616161",
-          800: "#424242",
-          900: "#212121",
-          950: "#181A20",
+          50: "#FAFBFC",
+          100: "#F7F8FA",   /* Main background */
+          200: "#F0F2F5",   /* Secondary / muted */
+          300: "#E4E7EC",   /* Borders */
+          400: "#C8CDD6",
+          500: "#9CA3B0",
+          600: "#6B7280",   /* Muted foreground */
+          700: "#4B5563",
+          800: "#374151",
+          900: "#1F2937",
+          950: "#181C24",   /* Main foreground */
         },
       },
       dark: {
         primary: {
           color: "#21B8A4",            /* Teal 46% lightness — bright on dark */
-          inverseColor: "#0B0E11",
+          inverseColor: "#0B0D11",
           hoverColor: "#2DD4BF",
           activeColor: "#14B8A6",
         },
@@ -72,20 +73,20 @@ export const marketsPreset = definePreset(Aura, {
           color: "rgba(33, 184, 164, 0.87)",
           focusColor: "rgba(33, 184, 164, 0.87)",
         },
-        /* Binance dark surfaces — warm grays, not cool zinc */
+        /* Navy-black surfaces — institutional dark palette */
         surface: {
-          0: "#0B0E11",   /* True black background */
-          50: "#14161A",
-          100: "#1E2026",  /* Card surface */
-          200: "#2B2F36",  /* Elevated surface */
-          300: "#3B4046",  /* Input background */
-          400: "#474D57",  /* Input border on focus */
-          500: "#5E6673",  /* Tertiary text */
-          600: "#848E9C",  /* Secondary text */
-          700: "#AEB4BC",
-          800: "#D1D4D9",
-          900: "#EAECEF",  /* Primary text */
-          950: "#F5F5F5",
+          0: "#0B0D11",   /* Navy-black canvas */
+          50: "#0F1115",
+          100: "#13161C",  /* Card surface */
+          200: "#1A1E26",  /* Elevated surface */
+          300: "#222630",  /* Border / input bg */
+          400: "#2E3340",  /* Input border on focus */
+          500: "#5E6878",  /* Tertiary text */
+          600: "#8A94A6",  /* Secondary text */
+          700: "#B0B8C8",
+          800: "#D4D9E2",
+          900: "#F0F2F5",  /* Primary text */
+          950: "#F7F8FA",
         },
       },
     },

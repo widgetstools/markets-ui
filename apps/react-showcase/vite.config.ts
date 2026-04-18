@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
+      "@": path.resolve(__dirname, "./src"),
       // Fix broken @import path in @widgetstools/react-dock-manager/styles.css
       "../../dock-manager-core/src/styles/dock-manager.css": path.resolve(
         __dirname,
